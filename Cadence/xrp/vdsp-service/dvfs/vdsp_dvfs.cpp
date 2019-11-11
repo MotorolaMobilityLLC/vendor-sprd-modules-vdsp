@@ -61,7 +61,7 @@ int32_t init_dvfs(void* device)
 	pthread_condattr_t attr;
 	struct xrp_device *dev = (struct xrp_device *)device;
 	g_monitor_exit = 0;
-	g_freqlevel = SPRD_VDSP_POWERHINT_NORMAL;
+	g_freqlevel = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
 	g_tempset = 0;
 	dvfs.en_ctl_flag = 1;
 	dvfs.enable = 1;
@@ -164,8 +164,12 @@ void postprocess_work_piece()
 int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uint32_t permanent)
 {
 	struct xrp_dvfs_ctrl dvfs;
-	int ret;
+	int ret = 0;
 	struct xrp_device *dev = (struct xrp_device *)device;
+	if((0 == permanent) && (level == SPRD_VDSP_POWERHINT_RESTORE_DVFS)) {
+		ALOGE("%s error parameter" , __func__);
+		return -1;
+	}
 	powerhint_lock.lock();
 	if(permanent) {
 		g_freqlevel = level;
@@ -173,10 +177,12 @@ int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uin
 		g_tempset = 1;
 	}
 	ALOGD("%s permant:%d , level:%d\n" , __func__ , permanent , level);
-	/*set power hint*/
-	dvfs.index = level;
-	dvfs.en_ctl_flag = 0;
-	ret = ioctl(dev->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
+	if(level != SPRD_VDSP_POWERHINT_RESTORE_DVFS) {
+		/*set power hint*/
+		dvfs.index = level;
+		dvfs.en_ctl_flag = 0;
+		ret = ioctl(dev->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
+	}
 	powerhint_lock.unlock();
 	return ret;
 }
@@ -287,15 +293,18 @@ static void *dvfs_monitor_thread(__unused void* data)
 		powerhint_lock.lock();
 		if(1 == g_tempset) {
 			g_tempset = 0;
-			if(g_freqlevel != SPRD_VDSP_POWERHINT_NORMAL) {
+			g_freqlevel = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
+#if 0
+			if(g_freqlevel != SPRD_VDSP_POWERHINT_RESTORE_DVFS) {
 				/*set freq to g_freqlevel*/
 				dvfs.index = g_freqlevel;
 				dvfs.en_ctl_flag = 0;
 				 ALOGD("%s before set dvfs index:%d\n" , __func__ , g_freqlevel);
 				ioctl(device->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
 			}
+#endif
 		}
-		if(SPRD_VDSP_POWERHINT_NORMAL == g_freqlevel) {
+		if(SPRD_VDSP_POWERHINT_RESTORE_DVFS == g_freqlevel) {
 			percentage = calculate_vdsp_usage(g_starttime  , systemTime(CLOCK_MONOTONIC));
 			ALOGD("%s percentage:%d\n" , __func__ , percentage);
 			//g_starttime = systemTime(CLOCK_MONOTONIC);

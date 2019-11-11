@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include "vdsp_dvfs.h"
 #include <cutils/properties.h>
+#include "xrp_kernel_defs.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -495,6 +496,9 @@ int32_t BnVdspService::sendXrpCommand(sp<IBinder> &client , const char *nsid , s
 	int32_t client_opencount = 0;
 	void * pinput , *poutput;
 	int32_t ret;
+	int32_t inmap,outmap;
+	inmap = 0;
+	outmap = 0;
 	IPCThreadState* ipc = IPCThreadState::self();
 	int32_t callingpid = ipc->getCallingPid();
 	mLock.lock();
@@ -509,35 +513,34 @@ int32_t BnVdspService::sendXrpCommand(sp<IBinder> &client , const char *nsid , s
 	/*do send */
 	ALOGD("func:%s , sprd_vdsp_send_command mDevice:%p , nsid:%s , input:%p,output:%p, buffer:%p callingpid:%d\n" , __func__ , mDevice , nsid , input , output , buffer,
 		callingpid);
-#if 1
-	if((input!= NULL) && (-1 != input->fd)) {
-		pinput = MapIonFd(input->fd , input->size);
-		if(pinput == NULL) {
-			ALOGE("func:%s , map input error\n" , __func__);
-			return -1;
+	if(input!= NULL) {
+		input->viraddr = NULL;
+		if((-1 != input->fd) && ((input->size <= XRP_DSP_CMD_INLINE_DATA_SIZE) || (0 == strncmp(nsid,FACEID_NSID,9)))) {
+			pinput = MapIonFd(input->fd , input->size);
+			if(pinput == NULL) {
+				ALOGE("func:%s , map input error\n" , __func__);
+				return -1;
+			}
+			inmap = 1;
+			input->viraddr = pinput;
 		}
-		input->viraddr = pinput;
 		ALOGD("func:%s , map input fd:%d inputvir:%p\n" , __func__ ,input->fd , input->viraddr);
 	}
-	if((output != NULL) && (-1 != output->fd)) {
-		poutput = MapIonFd(output->fd  , output->size);
-		if(NULL == poutput) {
-			ALOGE("func:%s , map output error\n" , __func__);
-			return -1;
+	if(output != NULL) {
+		output->viraddr = NULL;
+		if((-1 != output->fd) && (output->size <= XRP_DSP_CMD_INLINE_DATA_SIZE)) {
+			poutput = MapIonFd(output->fd  , output->size);
+			if(NULL == poutput) {
+				if(inmap == 1)
+					unMapIon(pinput , input->size);
+				ALOGE("func:%s , map output error\n" , __func__);
+				return -1;
+			}
+			outmap = 1;
+			output->viraddr = poutput;
 		}
-		output->viraddr = poutput;
 		ALOGD("func:%s , map output fd:%d outputvir:%p\n" , __func__ ,output->fd , output->viraddr);
 	}
-#else
-	if(NULL != buffer) {
-		int32_t oldfd;
-		for(uint32_t i = 0; i < bufnum; i++) {
-			oldfd = buffer[i].fd;
-			buffer[i].fd = MapIonFd(buffer[i].fd , buffer[i].size);
-			ALOGD(ANDROID_LOG_DEBUG,TAG_Server, "func:%s , map buffer i:%d, fd:%d to new fd:%d\n" , __func__ ,i , oldfd  , buffer[i].fd);
-		}
-	}
-#endif
 	#ifdef DVFS_OPEN
 	preprocess_work_piece();
 	#endif
@@ -545,15 +548,12 @@ int32_t BnVdspService::sendXrpCommand(sp<IBinder> &client , const char *nsid , s
 	#ifdef DVFS_OPEN
 	postprocess_work_piece();
 	#endif
-#if 1
-	if((input != NULL) && (-1 != input->fd)) {
+	if(inmap == 1) {
 		unMapIon(pinput , input->size);
 	}
-	if((output != NULL) && (-1 != output->fd)) {
+	if(outmap == 1) {
 		unMapIon(poutput , output->size);
 	}
-#endif
-//	sprd_vdsp_send_command(mDevice , nsid ,(struct sprd_vdsp_inout*)input, (struct sprd_vdsp_inout*)output,(struct sprd_vdsp_inout*)buffer ,bufnum,(enum sprd_xrp_queue_priority)priority);
 	mLock.lock();
 	mworking --;
 	mLock.unlock();

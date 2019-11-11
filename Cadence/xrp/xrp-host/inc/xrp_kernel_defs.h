@@ -37,6 +37,8 @@
 #define XRP_IOCTL_SET_DVFS      _IO(XRP_IOCTL_MAGIC, 5)
 #define XRP_IOCTL_FACEID_CMD    _IO(XRP_IOCTL_MAGIC, 6)
 
+#define XRP_DSP_CMD_INLINE_DATA_SIZE 16
+
 struct xrp_ioctl_alloc {
 	__u32 size;
 	__u32 align;

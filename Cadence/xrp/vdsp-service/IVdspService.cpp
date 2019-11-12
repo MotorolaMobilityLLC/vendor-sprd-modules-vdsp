@@ -176,7 +176,7 @@ public:
 		ALOGD("call proxy function %s exit status:%d , result = %d\n",__func__ ,status , result);
 		return result;
 	}
-	virtual int32_t powerHint(__unused sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t permanent) {
+	virtual int32_t powerHint(__unused sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t acquire_release) {
 		Parcel data , reply;
 		status_t status;
 		int32_t result;
@@ -184,7 +184,7 @@ public:
 		data.writeInterfaceToken(IVdspService::getInterfaceDescriptor());
 		data.writeStrongBinder(sp<IBinder> (callback));
 		data.writeInt32(level);
-		data.writeInt32(permanent);
+		data.writeInt32(acquire_release);
 		status = remote()->transact(BnVdspService::ACTION_POWER_HINT , data, &reply);
 		result = reply.readInt32();
 		if(status != OK) {
@@ -321,14 +321,14 @@ status_t BnVdspService::onTransact(
 	break;
 	case ACTION_POWER_HINT: {
 		sp<IBinder> client;
-		uint32_t permanent;
+		uint32_t acquire_release;
 		enum sprd_vdsp_power_level level;
 		CHECK_INTERFACE(IVdspService, data, reply);
 		client = data.readStrongBinder();
 		level = (enum sprd_vdsp_power_level) data.readInt32();
-		permanent = data.readInt32();
+		acquire_release = data.readInt32();
 		ALOGD("action ACTION_POWER_HINT library level:%d\n" , level);
-		uint32_t r = powerHint(client , level , permanent);
+		uint32_t r = powerHint(client , level , acquire_release);
 		ALOGD("action ACTION_POWER_HINT library level:%d ,result:%d\n" , level , r);
 		reply->writeInt32(r);
 	}
@@ -637,7 +637,7 @@ int32_t BnVdspService::unloadXrpLibrary(sp<IBinder> &client , const char *name) 
 	mLock.unlock();
 	return ret;
 }
-int32_t BnVdspService::powerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t permanent) {
+int32_t BnVdspService::powerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t acquire_release) {
 	int32_t ret = 0;
 	int32_t client_opencount;
 	mLock.lock();
@@ -651,9 +651,9 @@ int32_t BnVdspService::powerHint(sp<IBinder> &client , enum sprd_vdsp_power_leve
 	mworking ++;
 	mLock.unlock();
 #ifdef DVFS_OPEN
-	ret = set_powerhint_flag(mDevice , level ,permanent);//sprd_cavdsp_power_hint(mDevice , level , permanent);
+	ret = set_powerhint_flag(mDevice , level , acquire_release);//sprd_cavdsp_power_hint(mDevice , level , permanent);
 #else
-	ALOGD("func:%s , level:%d, permant:%d\n" , __func__ , level, permanent);
+	ALOGD("func:%s , level:%d, permant:%d\n" , __func__ , level, acquire_release);
 #endif
 	mLock.lock();
 	mworking --;

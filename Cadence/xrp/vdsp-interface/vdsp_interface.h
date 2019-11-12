@@ -54,7 +54,12 @@ enum sprd_xrp_queue_priority
         SPRD_XRP_PRIORITY_2,
         SPRD_XRP_PRIORITY_MAX
 };
-
+enum sprd_vdsp_powerhint_acquire_release
+{
+	SPRD_VDSP_POWERHINT_ACQUIRE = 0,
+	SPRD_VDSP_POWERHINT_RELEASE,
+	SPRD_VDSP_POWERHINT_MAX,
+};
 struct vdsp_handle
 {
         int32_t fd;
@@ -153,9 +158,11 @@ param:
 handle ---- handle get from sprd_cavdsp_open_device
 setunset --- 1 is set power hint, 0 is unset restore
 level ---- power level
-permanent ---- 1 is permanent setting , 0 is only set once and then recover dvfs mode.
+acquire_release----  SPRD_VDSP_POWERHINT_ACQUIRE is acqure power hint value, SPRD_VDSP_POWERHINT_RELEASE
+is restore to dvfs policy
 *************/
-enum sprd_vdsp_result sprd_cavdsp_power_hint(void *handle , enum sprd_vdsp_power_level level , uint32_t permanent);
+enum sprd_vdsp_result sprd_cavdsp_power_hint(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
+
 
 // ion mem
 void* sprd_alloc_ionmem(uint32_t size, uint8_t iscache, int32_t* fd, void** viraddr);

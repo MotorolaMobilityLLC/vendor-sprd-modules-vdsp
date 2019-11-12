@@ -13,15 +13,6 @@
 
 #define DVFS_MONITOR_CYCLE_TIME   (1000*1000)
 using namespace android;
-enum dvfs_enum_index {
-	DVFS_INDEX_0 = 0,
-	DVFS_INDEX_1,
-	DVFS_INDEX_2,
-	DVFS_INDEX_3,
-	DVFS_INDEX_4,
-	DVFS_INDEX_5,
-	DVFS_INDEX_MAX,
-};
 static Mutex timepiece_lock;
 static Mutex powerhint_lock;
 static uint32_t g_workingcount;
@@ -33,11 +24,12 @@ static struct vdsp_work_piece *g_currentpiece;
 List<struct vdsp_work_piece*> g_workpieces_list;
 #endif
 static uint32_t g_monitor_exit;
-static enum sprd_vdsp_power_level g_freqlevel;
-static uint32_t g_tempset;
 static int64_t g_starttime; 
 static int64_t g_cycle_totaltime;
 static int64_t g_piece_starttime;
+static uint32_t g_powerhint_count_level[SPRD_VDSP_POWERHINT_LEVEL_MAX];
+static uint32_t g_last_powerhint_level = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
+static uint32_t g_last_dvfs_index = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
 static void *dvfs_monitor_thread(void* data);
 
 int32_t set_dvfs_maxminfreq(void *device , int32_t maxminflag)
@@ -47,27 +39,30 @@ int32_t set_dvfs_maxminfreq(void *device , int32_t maxminflag)
 	dvfs.en_ctl_flag = 0;
 	dvfs.enable = 1;
 	if(maxminflag)
-		dvfs.index = DVFS_INDEX_5;
+		dvfs.index = SPRD_VDSP_POWERHINT_LEVEL_5;
 	else
-		dvfs.index = DVFS_INDEX_0;
+		dvfs.index = SPRD_VDSP_POWERHINT_LEVEL_0;
 	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);
 	return 0;
 }
 
 int32_t init_dvfs(void* device)
 {
-	int ret;
+	int ret , i;
 	struct xrp_dvfs_ctrl dvfs;
 	pthread_condattr_t attr;
 	struct xrp_device *dev = (struct xrp_device *)device;
 	g_monitor_exit = 0;
-	g_freqlevel = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
-	g_tempset = 0;
+	g_last_powerhint_level = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
+	for(i = 0; i < SPRD_VDSP_POWERHINT_LEVEL_MAX; i++) {
+		g_powerhint_count_level[i] = 0;
+        }
 	dvfs.en_ctl_flag = 1;
 	dvfs.enable = 1;
-	dvfs.index = DVFS_INDEX_5;
+	dvfs.index = SPRD_VDSP_POWERHINT_LEVEL_5;
 	g_starttime = systemTime(CLOCK_MONOTONIC);
         g_cycle_totaltime = 0;
+	g_last_dvfs_index = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
 	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);
 	pthread_mutex_init(&g_deinitmutex , NULL);
 	pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
@@ -91,8 +86,9 @@ void deinit_dvfs(void *device)
 	pthread_cond_signal(&g_deinitcond);
 	pthread_mutex_unlock(&g_deinitmutex);
 	pthread_join(g_monitor_threadid , NULL);
-	dvfs.en_ctl_flag = 1;
-	dvfs.enable = 0;
+	dvfs.en_ctl_flag = 0;
+	dvfs.enable = 1;
+	dvfs.index = 
 	pthread_mutex_destroy(&g_deinitmutex);
 	pthread_cond_destroy(&g_deinitcond);
 	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);
@@ -161,28 +157,41 @@ void postprocess_work_piece()
 	ALOGD("func:%s , gworkingcount:%d" , __func__ , g_workingcount);
 #endif
 }
-int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uint32_t permanent)
+int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uint32_t acquire_release)
 {
 	struct xrp_dvfs_ctrl dvfs;
+	int i;
 	int ret = 0;
 	struct xrp_device *dev = (struct xrp_device *)device;
-	if((0 == permanent) && (level == SPRD_VDSP_POWERHINT_RESTORE_DVFS)) {
-		ALOGE("%s error parameter" , __func__);
+	if(level == SPRD_VDSP_POWERHINT_RESTORE_DVFS) {
+		ALOGW("func:%s , level is error" , __func__);
 		return -1;
 	}
 	powerhint_lock.lock();
-	if(permanent) {
-		g_freqlevel = level;
-	} else {
-		g_tempset = 1;
+	if(acquire_release == SPRD_VDSP_POWERHINT_ACQUIRE) {
+		g_powerhint_count_level[level]++;
+	} else if(SPRD_VDSP_POWERHINT_RELEASE == acquire_release){
+		g_powerhint_count_level[level]--;
 	}
-	ALOGD("%s permant:%d , level:%d\n" , __func__ , permanent , level);
-	if(level != SPRD_VDSP_POWERHINT_RESTORE_DVFS) {
+	for(i = SPRD_VDSP_POWERHINT_LEVEL_MAX -1; i >= 0; i--) {
+		if(g_powerhint_count_level[i] != 0) {
+			break;
+		}
+	}
+
+	ALOGD("%s acquire_release:%d , level:%d , i:%d , g_last_powerhint_level:%d\n" , __func__ , acquire_release , level,
+		i , g_last_powerhint_level);
+	if((i != -1) && (g_last_powerhint_level != i)) {
 		/*set power hint*/
-		dvfs.index = level;
+		dvfs.index = i;
 		dvfs.en_ctl_flag = 0;
 		ret = ioctl(dev->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
+		g_last_powerhint_level = i;
+	} else if(-1 == i) {
+		g_last_dvfs_index = g_last_powerhint_level;
+		g_last_powerhint_level = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
 	}
+
 	powerhint_lock.unlock();
 	return ret;
 }
@@ -258,11 +267,11 @@ static uint32_t calculate_dvfs_index(uint32_t percent)
 	static uint32_t last_percent = 0;
 	last_percent = percent;
 	if((last_percent > 50) && (percent > 50)) {
-		return DVFS_INDEX_5;
+		return SPRD_VDSP_POWERHINT_LEVEL_5;
 	} else if(((percent <= 50) && (percent > 20)) && (last_percent <= 50)) {
-		return DVFS_INDEX_3;
+		return SPRD_VDSP_POWERHINT_LEVEL_3;
 	} else {
-		return DVFS_INDEX_0;
+		return SPRD_VDSP_POWERHINT_LEVEL_0;
 	}
 }
 static int32_t calculate_delay_time(struct timespec *next_time , int32_t sleeptime)
@@ -291,26 +300,16 @@ static void *dvfs_monitor_thread(__unused void* data)
 		}
 		pthread_mutex_unlock(&g_deinitmutex);
 		powerhint_lock.lock();
-		if(1 == g_tempset) {
-			g_tempset = 0;
-			g_freqlevel = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
-#if 0
-			if(g_freqlevel != SPRD_VDSP_POWERHINT_RESTORE_DVFS) {
-				/*set freq to g_freqlevel*/
-				dvfs.index = g_freqlevel;
-				dvfs.en_ctl_flag = 0;
-				 ALOGD("%s before set dvfs index:%d\n" , __func__ , g_freqlevel);
-				ioctl(device->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
-			}
-#endif
-		}
-		if(SPRD_VDSP_POWERHINT_RESTORE_DVFS == g_freqlevel) {
+		if(SPRD_VDSP_POWERHINT_RESTORE_DVFS == g_last_powerhint_level) {
 			percentage = calculate_vdsp_usage(g_starttime  , systemTime(CLOCK_MONOTONIC));
 			ALOGD("%s percentage:%d\n" , __func__ , percentage);
 			//g_starttime = systemTime(CLOCK_MONOTONIC);
 			/*dvfs set freq*/
 			dvfs.index = calculate_dvfs_index(percentage);
-			ioctl(device->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
+			if(dvfs.index != g_last_dvfs_index) {
+				ioctl(device->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
+				g_last_dvfs_index = dvfs.index;
+			}
 		}
 		powerhint_lock.unlock();
 		//usleep(DVFS_MONITOR_CYCLE_TIME);

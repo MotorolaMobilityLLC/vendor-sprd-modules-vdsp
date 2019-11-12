@@ -45,7 +45,7 @@ public:
 						struct VdspInputOutput *buffer , uint32_t bufnum , uint32_t priority) = 0;
 	virtual int32_t loadXrpLibrary(sp<IBinder> &client , const char* name , struct VdspInputOutput *buffer) = 0;
 	virtual int32_t unloadXrpLibrary(sp<IBinder> &client , const char *name) = 0;
-	virtual int32_t powerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t permanent) = 0;
+	virtual int32_t powerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t acquire_release) = 0;
 };
 
 
@@ -71,7 +71,7 @@ public:
 					struct VdspInputOutput *buffer , uint32_t bufnum , uint32_t priority);
 	virtual int32_t loadXrpLibrary(sp<IBinder> &client , const char* name , struct VdspInputOutput *buffer);
 	virtual int32_t unloadXrpLibrary(sp<IBinder> &client , const char *name);
-	virtual int32_t powerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t permanent);
+	virtual int32_t powerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t acquire_release);
 	virtual void lockMlock();
 	virtual void unlockMlock();
 	virtual void lockLoadLock();

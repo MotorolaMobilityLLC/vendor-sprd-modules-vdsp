@@ -448,7 +448,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unload
 		}
 	}
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_hint(void *handle , enum sprd_vdsp_power_level level , uint32_t permanent)
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_hint(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)
 {
 	sp<IVdspService> cs = NULL;
         enum sprd_vdsp_result result;
@@ -489,7 +489,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
                 gWorking ++;
 		g_FdInfo[fd].working ++;
                 gLock.unlock();
-                result = (enum sprd_vdsp_result)cs->powerHint(gfakeBinder , level , permanent);
+                result = (enum sprd_vdsp_result)cs->powerHint(gfakeBinder , level , (uint32_t)acquire_release);
                 gLock.lock();
                 gWorking --;
                 g_FdInfo[fd].working --;

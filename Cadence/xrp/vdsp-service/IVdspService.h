@@ -9,7 +9,7 @@
 #include <utils/List.h>
 #include "vdsp_interface.h"
 
-//#define DVFS_OPEN
+#define DVFS_OPEN
 
 namespace android {
 

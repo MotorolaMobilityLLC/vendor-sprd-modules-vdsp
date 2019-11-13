@@ -264,15 +264,41 @@ static uint32_t calculate_vdsp_usage(int64_t fromtime , __unused int64_t endtime
 }
 static uint32_t calculate_dvfs_index(uint32_t percent)
 {
+#if 1
+	enum sprd_vdsp_power_level level = SPRD_VDSP_POWERHINT_LEVEL_0;
 	static uint32_t last_percent = 0;
-	last_percent = percent;
-	if((last_percent > 50) && (percent > 50)) {
-		return SPRD_VDSP_POWERHINT_LEVEL_5;
-	} else if(((percent <= 50) && (percent > 20)) && (last_percent <= 50)) {
-		return SPRD_VDSP_POWERHINT_LEVEL_3;
+	if((last_percent > 50)) {
+		if(percent > 50)
+			level = SPRD_VDSP_POWERHINT_LEVEL_5;
+		else if ((percent <= 50) && (percent > 20))
+			level = SPRD_VDSP_POWERHINT_LEVEL_3;
+		else if (percent <= 20)
+			level = SPRD_VDSP_POWERHINT_LEVEL_2;
+	} else if((last_percent <= 50) && (last_percent > 20)) {
+		if(percent > 50)
+			level = SPRD_VDSP_POWERHINT_LEVEL_5;
+		else if((percent <= 50) && (percent > 20))
+			level = SPRD_VDSP_POWERHINT_LEVEL_3;
+		else if (percent <= 20)
+			level = SPRD_VDSP_POWERHINT_LEVEL_2;
+		else
+			level = SPRD_VDSP_POWERHINT_LEVEL_2;
+	} else if(last_percent <= 20){
+		if(percent > 50)
+			level = SPRD_VDSP_POWERHINT_LEVEL_5;
+		else if ((percent <= 50) && (percent > 20))
+			level = SPRD_VDSP_POWERHINT_LEVEL_2;
+		else if (percent <= 20)
+			level = SPRD_VDSP_POWERHINT_LEVEL_2;
 	} else {
-		return SPRD_VDSP_POWERHINT_LEVEL_0;
+		level = SPRD_VDSP_POWERHINT_LEVEL_2;
 	}
+	last_percent = percent;
+	return level;
+#else
+ 	ALOGD("func:%s , force return level 5 , percent:%d" , __func__ , percent);
+	return SPRD_VDSP_POWERHINT_LEVEL_5;
+#endif
 }
 static int32_t calculate_delay_time(struct timespec *next_time , int32_t sleeptime)
 {
@@ -307,6 +333,7 @@ static void *dvfs_monitor_thread(__unused void* data)
 			/*dvfs set freq*/
 			dvfs.index = calculate_dvfs_index(percentage);
 			if(dvfs.index != g_last_dvfs_index) {
+				ALOGD("%s dvfs index:%d , last index:%d\n" , __func__ , dvfs.index , g_last_dvfs_index);
 				ioctl(device->impl.fd , XRP_IOCTL_SET_DVFS , &dvfs);
 				g_last_dvfs_index = dvfs.index;
 			}

@@ -460,11 +460,13 @@ int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
 		if(mworking != 0) {
 			/*busying*/
 			while(mworking != 0) {
+			mopen_count ++;
 			mLoadLock.unlock();
 			mLock.unlock();
 			usleep(1000);
 			mLoadLock.lock();
 			mLock.lock();
+			mopen_count --;
 			}
 			if(mopen_count != 0)
 				goto __exitprocess;

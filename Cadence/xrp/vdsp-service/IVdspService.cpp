@@ -642,10 +642,12 @@ int32_t BnVdspService::unloadXrpLibrary(sp<IBinder> &client , const char *name) 
 int32_t BnVdspService::powerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t acquire_release) {
 	int32_t ret = 0;
 	int32_t client_opencount;
+	mPowerHintLock.lock();
 	mLock.lock();
 	client_opencount = GetClientOpenNum(client);
 	if((mopen_count == 0) || (0 ==client_opencount)) {
 		mLock.unlock();
+		mPowerHintLock.unlock();
 		ALOGE("func:%s , mopen_count is:%d , client:%p , opencount:%d , return error\n" , __func__ , mopen_count , client.get(),client_opencount);
                 /*error not opened*/
 		return -1;
@@ -658,8 +660,12 @@ int32_t BnVdspService::powerHint(sp<IBinder> &client , enum sprd_vdsp_power_leve
 	ALOGD("func:%s , level:%d, permant:%d\n" , __func__ , level, acquire_release);
 #endif
 	mLock.lock();
+	if(ret == 0) {
+		ret = AddDecClientPowerHint(client , level , (enum sprd_vdsp_powerhint_acquire_release)acquire_release);
+	}
 	mworking --;
 	mLock.unlock();
+	mPowerHintLock.unlock();
 	return ret;
 }
 void BnVdspService::VdspServerDeathRecipient::binderDied(const wp<IBinder> &who){
@@ -667,11 +673,16 @@ void BnVdspService::VdspServerDeathRecipient::binderDied(const wp<IBinder> &who)
 	int clientopencount = 0;
 	ALOGW("call binderDied who:%p\n" , who.promote().get());
 	mVdspService->lockLoadLock();
+	mVdspService->lockPowerHint();
 	mVdspService->lockMlock();
 	//DecClientLoadNumByName(name , client);
 	sp<IBinder> client = who.promote();
 	/*unload library all loaded by this client*/
 	mVdspService->unloadLibraryLoadByClient(client);
+#ifdef DVFS_OPEN
+	/*release power hint state*/
+	mVdspService->ReleaseCilentPowerHint(client);
+#endif
 	/*close all open count for this client*/
 	clientopencount = mVdspService->GetClientOpenNum(client);
 	for(int i = 0;  i < clientopencount; i++) {
@@ -683,6 +694,7 @@ void BnVdspService::VdspServerDeathRecipient::binderDied(const wp<IBinder> &who)
 			mVdspService->GetClientOpenNum(client) , mVdspService->GetClientLoadTotalNum(client));
 
 	mVdspService->unlockMlock();
+	mVdspService->unlockPowerHint();
 	mVdspService->unlockLoadLock();
 }
 
@@ -805,6 +817,7 @@ int32_t BnVdspService::GetLoadNumTotalByName(const char *libname) {
 int32_t BnVdspService::AddClientOpenNumber(sp<IBinder> &client , int32_t *newclient) {
 	int32_t find = 0;
 	*newclient = 0;
+	int32_t i;
 	status_t ret = NO_ERROR;
 	Vector<sp<ClientInfo>>::iterator iter;
 	ALOGD("func:%s enter , client:%p , iter:%p ,end:%p\n" , __func__ , client.get(), mClientInfo.begin() , mClientInfo.end());
@@ -821,6 +834,8 @@ int32_t BnVdspService::AddClientOpenNumber(sp<IBinder> &client , int32_t *newcli
 		sp<ClientInfo> newclientinfo = new ClientInfo;
 		newclientinfo->mclientbinder = client;
 		newclientinfo->mopencount = 1;
+		for(i = 0; i < SPRD_VDSP_POWERHINT_LEVEL_MAX; i++)
+			newclientinfo->mpowerhint_levelnum[i] = 0;
 		newclientinfo->mDepthRecipient = new VdspServerDeathRecipient(this);
                 ret = client->linkToDeath(newclientinfo->mDepthRecipient);
 		if(ret == NO_ERROR) {
@@ -928,8 +943,53 @@ int32_t  BnVdspService::GetClientLoadTotalNum(sp<IBinder> &client) {
 	}
 	return loadcount;
 }
-
-
+int32_t BnVdspService::AddDecClientPowerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release) {
+	Vector<sp<ClientInfo>>::iterator iter;
+	int32_t ret = -1;
+	for(iter = mClientInfo.begin(); iter != mClientInfo.end(); iter++) {
+		if(client == (*iter)->mclientbinder) {
+			if(acquire_release == SPRD_VDSP_POWERHINT_ACQUIRE) {
+				(*iter)->mpowerhint_levelnum[level] ++;
+				ALOGD("func:%s , level:%d , acquire mpowerhint_levelnum:%d" , __func__ , level , (*iter)->mpowerhint_levelnum[level]);
+				ret = 0;
+			}
+			else if(acquire_release == SPRD_VDSP_POWERHINT_RELEASE) {
+				(*iter)->mpowerhint_levelnum[level] --;
+				ALOGD("func:%s , level:%d , release mpowerhint_levelnum:%d" , __func__ , level , (*iter)->mpowerhint_levelnum[level]);
+				ret = 0;
+			}
+			break;
+		}
+	}
+	return ret;
+}
+int32_t BnVdspService::ReleaseCilentPowerHint(sp<IBinder> &client) {
+	Vector<sp<ClientInfo>>::iterator iter;
+	int32_t i , j;
+	int32_t level_count = 0;
+	int32_t ret = -1;
+	int32_t realret = 0;
+	for(iter = mClientInfo.begin(); iter != mClientInfo.end(); iter++) {
+		if(client == (*iter)->mclientbinder) {
+			for(i = 0; i < SPRD_VDSP_POWERHINT_LEVEL_MAX; i++) {
+				level_count = 0;
+				for(j = 0; j < (*iter)->mpowerhint_levelnum[i]; j++) {
+					ret = set_powerhint_flag(mDevice , (enum sprd_vdsp_power_level)i , (uint32_t)SPRD_VDSP_POWERHINT_RELEASE);
+					if(ret == 0) {
+						level_count++;
+					}
+					ALOGD("func:%s , release power hint level:%d , level count:%d , ret:%d , client:%p" , __func__ , i , level_count , ret , client.get());
+				}
+				(*iter)->mpowerhint_levelnum[i] -= level_count;
+				if((*iter)->mpowerhint_levelnum[i] != 0)
+					realret = -1;
+			}
+			break;
+		}
+	}
+	ALOGD("func:%s ret:%d, realret:%d" , __func__ , ret , realret);
+	return (int32_t)(ret && realret);
+}
 void BnVdspService::lockMlock()
 {
 	mLock.lock();
@@ -943,6 +1003,13 @@ void BnVdspService::lockLoadLock() {
 }
 void BnVdspService::unlockLoadLock() {
 	mLoadLock.unlock();
+}
+void BnVdspService::lockPowerHint() {
+	mPowerHintLock.lock();
+}
+
+void BnVdspService::unlockPowerHint() {
+	mPowerHintLock.unlock();
 }
 void BnVdspService::AddDecOpenCount(int32_t count) {
 	mopen_count += count;

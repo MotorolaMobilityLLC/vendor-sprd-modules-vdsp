@@ -76,6 +76,8 @@ public:
 	virtual void unlockMlock();
 	virtual void lockLoadLock();
 	virtual void unlockLoadLock();
+	virtual void lockPowerHint();
+	virtual void unlockPowerHint();
 #endif
 #if 1
 	class VdspServerDeathRecipient: public IBinder::DeathRecipient
@@ -106,12 +108,14 @@ private:
 	int32_t unMapIon(void *ptr , size_t size);
 	int32_t unloadLibraryLoadByClient(sp<IBinder> &client);
 	int32_t GetTotalOpenNumAndLibCount(int32_t *opencount , int32_t *libcount);
-
+	int32_t AddDecClientPowerHint(sp<IBinder> &client , enum sprd_vdsp_power_level level, enum sprd_vdsp_powerhint_acquire_release acquire_release);
+	int32_t ReleaseCilentPowerHint(sp<IBinder> &client);
 #endif
 private:
 
 	Mutex mLock;
 	Mutex mLoadLock;
+	Mutex mPowerHintLock;
 	uint32_t mopen_count;
 	uint32_t mworking;
 	void *mDevice;
@@ -139,11 +143,12 @@ public:
 class ClientInfo : public virtual RefBase
 {
 public:
-        sp<IBinder> mclientbinder;
-        int32_t mopencount;
+	sp<IBinder> mclientbinder;
+	int32_t mopencount;
 	int32_t mworking;
-        sp<BnVdspService::VdspServerDeathRecipient>mDepthRecipient;
-        Vector<sp<LoadLibInfo>> mloadinfo;
+	uint32_t mpowerhint_levelnum[SPRD_VDSP_POWERHINT_LEVEL_MAX];
+	sp<BnVdspService::VdspServerDeathRecipient>mDepthRecipient;
+	Vector<sp<LoadLibInfo>> mloadinfo;
 };
 
 

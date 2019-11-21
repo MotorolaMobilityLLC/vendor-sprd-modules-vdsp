@@ -251,7 +251,11 @@ static uint32_t calculate_vdsp_usage(int64_t fromtime , __unused int64_t endtime
 	timepiece_lock.lock();
 	if(g_workingcount != 0) {
 		/*now some piece may executing*/
-		g_cycle_totaltime += (current_time - g_piece_starttime);
+		if(g_piece_starttime <= fromtime) {
+			g_cycle_totaltime = current_time - fromtime;
+		} else {
+			g_cycle_totaltime += (current_time - g_piece_starttime);
+		}
 	}
 	percent = (g_cycle_totaltime*100) / (current_time - fromtime);
 	ALOGD("func:%s , g_cycle_totaltime:%d ms , timeeclapse:%d ms , percent:%d" ,

@@ -71,8 +71,12 @@ int32_t init_dvfs(void* device)
 	ret = pthread_create(&g_monitor_threadid , NULL , dvfs_monitor_thread , device);
 	if(0 == ret)
 		return 1;/*1 is ok*/
-	else
+	else {
+		pthread_mutex_destroy(&g_deinitmutex);
+		pthread_cond_destroy(&g_deinitcond);
+		dvfs.en_ctl_flag = 0;
 		return 0;/*0 is error*/
+	}
 }
 void deinit_dvfs(void *device)
 {
@@ -88,7 +92,6 @@ void deinit_dvfs(void *device)
 	pthread_join(g_monitor_threadid , NULL);
 	dvfs.en_ctl_flag = 0;
 	dvfs.enable = 1;
-	dvfs.index = 
 	pthread_mutex_destroy(&g_deinitmutex);
 	pthread_cond_destroy(&g_deinitcond);
 	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);

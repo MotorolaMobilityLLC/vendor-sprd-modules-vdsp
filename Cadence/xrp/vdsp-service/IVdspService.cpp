@@ -356,23 +356,17 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 		mDevice = sprd_vdsp_open_device(0 , type);
 		mType = type;
 		mIonDevFd = open("/dev/ion" , O_RDWR);
-		#ifdef DVFS_OPEN
-		mDvfs = init_dvfs(mDevice);
-		#endif
 		ALOGD("func:%s , really open device type:%d device:%p , IondevFd:%d\n" , __func__ , type , mDevice , mIonDevFd);
 		if((mDevice != NULL) && (mIonDevFd > 0)) {
+			#ifdef DVFS_OPEN
+			mDvfs = init_dvfs(mDevice);
+			#endif
 			property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
 			if(atoi(value) == 1)
 				set_dvfs_maxminfreq(mDevice , 1);
 			mopen_count++;
 		}
 		else {
-			#ifdef DVFS_OPEN
-			if(0 != mDvfs) {
-				deinit_dvfs(mDevice);
-				mDvfs = 0;
-			}
-			#endif
 			if(mDevice != NULL)
 				sprd_vdsp_release_device(mDevice);
 			if(mIonDevFd > 0)

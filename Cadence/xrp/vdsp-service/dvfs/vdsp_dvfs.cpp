@@ -64,6 +64,7 @@ int32_t init_dvfs(void* device)
         g_cycle_totaltime = 0;
 	g_last_dvfs_index = SPRD_VDSP_POWERHINT_RESTORE_DVFS;
 	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);
+	pthread_condattr_init(&attr);
 	pthread_mutex_init(&g_deinitmutex , NULL);
 	pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
 	pthread_cond_init(&g_deinitcond , &attr);
@@ -95,6 +96,7 @@ void deinit_dvfs(void *device)
 	pthread_mutex_destroy(&g_deinitmutex);
 	pthread_cond_destroy(&g_deinitcond);
 	ioctl(dev->impl.fd ,XRP_IOCTL_SET_DVFS , &dvfs);
+
 #if 0
 	for(iter = g_workpieces_list.begin(); iter != g_workpieces_list.end(); iter++) {
 		delete *iter;

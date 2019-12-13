@@ -315,7 +315,7 @@ static void _xrp_run_command(struct xrp_queue *queue,
 			output.size = out_data_size;
 			output.flag = 0;
 		}
-		ret = sprd_cavdsp_send_cmd(&queue->device->impl.handle , queue->nsid , pinput , poutput ,
+		ret = sprd_cavdsp_send_cmd_direct(queue->device , queue->nsid , pinput , poutput ,
                                                 buffer , n_buffers , queue->priority);
 		if(buffer != NULL) {
 			free(buffer);
@@ -362,7 +362,7 @@ void xrp_run_command_directly(struct xrp_device *device ,const char * nsid , uns
                                 .fd = buffer_group->buffer[i].buffer->ion_fd,
                         };
                 }
-                fprintf(stderr , "yzl add %s , flag:%x\n" , __func__ , ioctl_queue.flags);
+		ALOGD("func:%s , fd:%d" , __func__ , device->impl.fd);
                 ret = ioctl(device->impl.fd,
                             XRP_IOCTL_QUEUE, &ioctl_queue);
         }

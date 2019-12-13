@@ -71,6 +71,8 @@ extern "C" {
  */
 struct xrp_device *sprd_xrp_open_device(int idx, enum xrp_status *status);
 
+struct xrp_device *sprd_xrp_open_device_direct(int idx, enum xrp_status *status);
+
 /*!
  * Increment device reference count.
  */
@@ -349,6 +351,7 @@ void sprd_xrp_run_command_sync(struct xrp_queue *queue,
                           void *out_data, int out_data_fd , size_t out_data_size,
                           struct xrp_buffer_group *buffer_group,
                           enum xrp_status *status);
+
 #else
 void sprd_xrp_run_command_sync(struct xrp_queue *queue,
 			  const void *in_data, size_t in_data_size,

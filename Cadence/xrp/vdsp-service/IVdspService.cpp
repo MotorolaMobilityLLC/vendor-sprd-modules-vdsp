@@ -180,7 +180,7 @@ public:
 		Parcel data , reply;
 		status_t status;
 		int32_t result;
-		ALOGD("call proxy    function %s , enter level:%d\n" , __func__ , level);
+		ALOGD("call proxy    function %s , enter level:%d, acquire_release:%d\n" , __func__ , level , acquire_release);
 		data.writeInterfaceToken(IVdspService::getInterfaceDescriptor());
 		data.writeStrongBinder(sp<IBinder> (callback));
 		data.writeInt32(level);
@@ -327,7 +327,7 @@ status_t BnVdspService::onTransact(
 		client = data.readStrongBinder();
 		level = (enum sprd_vdsp_power_level) data.readInt32();
 		acquire_release = data.readInt32();
-		ALOGD("action ACTION_POWER_HINT library level:%d\n" , level);
+		ALOGD("action ACTION_POWER_HINT library level:%d , acquire_release:%d\n" , level , acquire_release);
 		uint32_t r = powerHint(client , level , acquire_release);
 		ALOGD("action ACTION_POWER_HINT library level:%d ,result:%d\n" , level , r);
 		reply->writeInt32(r);
@@ -342,7 +342,6 @@ status_t BnVdspService::onTransact(
 
 int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_worktype type) {
 	int32_t newclient;
-	char value[128];
 	int32_t ret;
 	IPCThreadState* ipc = IPCThreadState::self();
 	int32_t callingpid = ipc->getCallingPid();
@@ -360,10 +359,10 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 		if((mDevice != NULL) && (mIonDevFd > 0)) {
 			#ifdef DVFS_OPEN
 			mDvfs = init_dvfs(mDevice);
-			#endif
 			property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
 			if(atoi(value) == 1)
 				set_dvfs_maxminfreq(mDevice , 1);
+			#endif
 			mopen_count++;
 		}
 		else {
@@ -396,7 +395,6 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 	int32_t ret = 0;
 	int32_t count;
-	char value[128];
 	IPCThreadState* ipc = IPCThreadState::self();
 	int32_t callingpid = ipc->getCallingPid();
 	AutoMutex _l(mLock);
@@ -419,10 +417,10 @@ int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 			deinit_dvfs(mDevice);
 			mDvfs = 0;
 		}
-		#endif
 		property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
 		if(atoi(value) == 1)
 			set_dvfs_maxminfreq(mDevice , 0);
+		#endif
 		sprd_vdsp_release_device(mDevice);
 		close(mIonDevFd);
 		mIonDevFd = -1;
@@ -443,7 +441,6 @@ int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
         int32_t ret = 0;
         int32_t count;
 	int32_t i;
-	char value[128];
         count = GetClientOpenNum(client);
         if(count <= 0) {
                 ALOGE("func:%s , client:%p open count is 0, return invalid client\n" , __func__ , client.get());
@@ -470,10 +467,10 @@ int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
 			deinit_dvfs(mDevice);
 			mDvfs = 0;
 		}
-		#endif
 		property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
 		if(atoi(value) == 1)
 			set_dvfs_maxminfreq(mDevice , 0);
+		#endif
                 sprd_vdsp_release_device(mDevice);
                 close(mIonDevFd);
                 mIonDevFd = -1;
@@ -648,11 +645,8 @@ int32_t BnVdspService::powerHint(sp<IBinder> &client , enum sprd_vdsp_power_leve
 	}
 	mworking ++;
 	mLock.unlock();
-#ifdef DVFS_OPEN
 	ret = set_powerhint_flag(mDevice , level , acquire_release);//sprd_cavdsp_power_hint(mDevice , level , permanent);
-#else
 	ALOGD("func:%s , level:%d, permant:%d\n" , __func__ , level, acquire_release);
-#endif
 	mLock.lock();
 	if(ret == 0) {
 		ret = AddDecClientPowerHint(client , level , (enum sprd_vdsp_powerhint_acquire_release)acquire_release);
@@ -673,10 +667,8 @@ void BnVdspService::VdspServerDeathRecipient::binderDied(const wp<IBinder> &who)
 	sp<IBinder> client = who.promote();
 	/*unload library all loaded by this client*/
 	mVdspService->unloadLibraryLoadByClient(client);
-#ifdef DVFS_OPEN
 	/*release power hint state*/
 	mVdspService->ReleaseCilentPowerHint(client);
-#endif
 	/*close all open count for this client*/
 	clientopencount = mVdspService->GetClientOpenNum(client);
 	for(int i = 0;  i < clientopencount; i++) {
@@ -704,7 +696,7 @@ int32_t BnVdspService::unloadLibraryLoadByClient(sp<IBinder> &client) {
 				(*iter1)->loadcount = 0;
 				if(GetLoadNumTotalByName((*iter1)->libname) == 0) {
 					ret = sprd_vdsp_unload_library(mDevice ,(*iter1)->libname , SPRD_XRP_PRIORITY_2);
-					ALOGD("func:%s , who:%p , libname:%s is really unloaded\n" , 
+					ALOGD("func:%s , who:%p , libname:%s is unloaded\n" , 
 								__func__ , client.get() , (*iter1)->libname);
 				} else {
 					 ALOGD("func: %s , who:%p , libname:%s num is set 0\n" ,

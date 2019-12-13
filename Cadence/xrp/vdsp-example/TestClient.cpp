@@ -26,6 +26,7 @@ struct test_control
 	int opentime;
 	int closeflag;
 	int closetime;
+	int powerhintlevel;
 };
 
 void* test_load_unload_lib(void* test)
@@ -113,6 +114,101 @@ void* test_load_unload_lib(void* test)
 	}
 	return NULL;
 }
+void* test_load_unload_lib_1(void* test)
+{
+        struct sprd_vdsp_client_inout in,out;
+        uint32_t size = 8192;
+        struct vdsp_handle handle;
+        int ret , ret1;
+        int i;
+        int openflag, closeflag, loadflag, unloadflag;
+        FILE *fp;
+        char filename[256];
+        int buffersize = 8192;
+        void *inputhandle;
+        void *outputhandle;
+        void *inviraddr;
+        void *outviraddr;
+	void *handle1 = NULL;
+        openflag = 1;
+        closeflag = 1;
+        loadflag = 1;
+        unloadflag = 1;
+        struct test_control *control = (struct test_control *)test;
+        if(control != NULL)
+        {
+                openflag = control->openflag;
+                closeflag = control->closeflag;
+                loadflag = control->loadflag;
+                unloadflag = control->unloadflag;
+        }
+        inputhandle = sprd_alloc_ionmem(size , 0 , &in.fd , &inviraddr);
+        outputhandle = sprd_alloc_ionmem(size , 0 , &out.fd , &outviraddr);
+        in.size = size;
+        out.size = size;
+        in.viraddr = inviraddr;
+        if(inputhandle != NULL)
+        {
+                memset(inviraddr , 0xbb , size);
+        }
+	if(outputhandle != NULL)
+        {
+                memset(outviraddr , 0xcc , size);
+        }
+        sprintf(filename , "/vendor/firmware/%s.bin" , control->libname);
+        fp = fopen(filename , "rb");
+        if(fp) {
+                ret = fread(in.viraddr , 1, buffersize , fp);
+                fprintf(stderr , "yzl add %s , fwrite %s buffersize:%d , size:%d\n" , __func__ , control->libname , buffersize , ret);
+                fclose(fp);
+        }
+        else
+        {
+                fprintf(stderr , "yzl add %s , fopen %s failed\n" , __func__ , control->libname);
+        }
+	ret1 = sprd_cavdsp_open_device_direct(SPRD_VDSP_WORK_NORMAL , &handle1);
+        while(1){
+                if(openflag) {
+                        ret = sprd_cavdsp_open_device(SPRD_VDSP_WORK_NORMAL , &handle);
+			ret1 = sprd_cavdsp_open_device_direct(SPRD_VDSP_WORK_NORMAL , &handle1);
+                        printf("----------after open device libname:%s-------------\n" , control->libname);
+                        ALOGD("function:%s , sprd_cavdsp_open_device libname:%s , ret:%d\n" , __func__ , control->libname , ret);
+                }
+                usleep(1000000);
+//		sprd_cavdsp_power_hint(&handle ,  (enum sprd_vdsp_power_level) control->powerhintlevel , SPRD_VDSP_POWERHINT_ACQUIRE);
+                if(loadflag) {
+                        for(i = 0; i< control->loadtime; i ++) {
+                        ret = sprd_cavdsp_loadlibrary(&handle , control->libname , &in);
+                        ALOGD("function:%s , sprd_cavdsp_loadlibrary libname:%s  time:%d , ret:%d\n" , __func__ ,control->libname , i , ret);
+                        printf("----------after sprd_cavdsp_loadlibrary time:%d , libname:%s-------------\n" , i , control->libname);
+                        }
+                }
+
+                ret = sprd_cavdsp_send_cmd(&handle , "testlib" , &in , NULL , NULL , 0 , 1);
+		ret1 = sprd_cavdsp_send_cmd_direct(handle1 , "testlib" , &in , NULL , NULL , 0 , 1);
+
+                ALOGD("function:%s , sprd_cavdsp_send_cmd libname:%s ret:%d\n" , __func__ , control->libname  , ret);
+                printf("----------after sprd_cavdsp_send_cmd libname:%s-------------\n" , control->libname);
+		usleep(5000000);
+                if(unloadflag) {
+                        for(i = 0; i< control->unloadtime; i ++) {
+                        	ret = sprd_cavdsp_unloadlibrary(&handle , control->libname);
+	                        ALOGD("function:%s , sprd_cavdsp_unloadlibrary libname:%s time:%d , ret:%d\n" , __func__ ,control->libname  , i , ret);
+                        	printf("----------after sprd_cavdsp_unloadlibrary time:%d , libname:%s-------------\n" , i , control->libname);
+                        }
+                }
+//		sprd_cavdsp_power_hint(&handle , (enum sprd_vdsp_power_level) control->powerhintlevel , SPRD_VDSP_POWERHINT_RELEASE);
+		if(closeflag) {
+                        ret = sprd_cavdsp_close_device(&handle);
+			ret1 = sprd_cavdsp_close_device_direct(handle1);
+                        ALOGD("function:%s ,sprd_cavdsp_close_device libname:%s ret:%d\n" , __func__ ,control->libname , ret);
+                        printf("----------after sprd_cavdsp_close_device libname:%s-------------\n" , control->libname);
+                }
+                usleep(1000000);
+        }
+        return NULL;
+}
+
 void* thread2(__unused void* test)
 {
 	struct sprd_vdsp_client_inout in,out;
@@ -367,6 +463,17 @@ int main(__unused int argc , char *argv[]) {
 		break;
 	case 10:
 		thread_faceid(NULL);
+		break;
+	case 11:
+		control.powerhintlevel = 3;
+		control.unloadflag = 0;
+		control.loadtime = 3;
+		pthread_create(&a , NULL , test_load_unload_lib_1 , &control);
+		control1.powerhintlevel = 4;
+		control1.unloadflag = 0;
+		control1.libname = libname1;
+		control1.loadtime = 3;
+		pthread_create(&a , NULL , test_load_unload_lib_1 , &control1);
 		break;
 	default:
 		break;

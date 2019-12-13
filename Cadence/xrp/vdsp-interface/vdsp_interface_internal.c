@@ -4,6 +4,9 @@
 #include "vdsp_interface_internal.h"
 #include "example_namespace.h"
 #include <log/log_main.h>
+#include "xrp_kernel_defs.h"
+#include <sys/ioctl.h>
+#include "xrp_host_common.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -320,4 +323,13 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_unload_library(void *devic
 	sprd_free_ionmem(inputhandle);
 	return ret;
 }
-
+__attribute__ ((visibility("default"))) int sprd_vdsp_power_hint_direct(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)
+{
+	int32_t ret;
+        struct xrp_device *device = (struct xrp_device*) handle;
+        struct xrp_powerhint_ctrl powerhint_info;
+        powerhint_info.level = level;
+        powerhint_info.acquire_release = acquire_release;
+        ret = ioctl(device->impl.fd, XRP_IOCTL_SET_POWERHINT, &powerhint_info);
+	return ret;
+}

@@ -164,6 +164,7 @@ void postprocess_work_piece()
 }
 int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uint32_t acquire_release)
 {
+#if 0
 	struct xrp_dvfs_ctrl dvfs;
 	int i;
 	int ret = 0;
@@ -199,10 +200,19 @@ int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uin
 
 	powerhint_lock.unlock();
 	return ret;
+#else
+	int32_t ret;
+	struct xrp_device *dev = (struct xrp_device*) device;
+	struct xrp_powerhint_ctrl powerhint_info;
+	powerhint_info.level = level;
+	powerhint_info.acquire_release = acquire_release;
+	ALOGD("fun:%s powerhint level:%d , acquire_release:%d" , __func__ , powerhint_info.level , powerhint_info.acquire_release);
+	ret = ioctl(dev->impl.fd, XRP_IOCTL_SET_POWERHINT, &powerhint_info);
+        return ret;
+#endif
 }
 static uint32_t calculate_vdsp_usage(int64_t fromtime , __unused int64_t endtime)
 {
-	List<struct vdsp_work_piece*>::iterator iter;
 #if 0
 	int64_t costtime = 0;
 	int64_t small_endtime;

@@ -5,6 +5,7 @@
 #include "vdsp_interface.h"
 #include <cutils/properties.h>
 #include "xrp_interface.h"
+#include "vdsp_interface_internal.h"
 
 
 #ifdef LOG_TAG
@@ -489,6 +490,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
                 gWorking ++;
 		g_FdInfo[fd].working ++;
                 gLock.unlock();
+		ALOGD("func:%s , before powerHint level:%d, acquire_release:%d" , __func__ , level , acquire_release);
                 result = (enum sprd_vdsp_result)cs->powerHint(gfakeBinder , level , (uint32_t)acquire_release);
                 gLock.lock();
                 gWorking --;
@@ -502,4 +504,37 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
                         return SPRD_VDSP_RESULT_FAIL;
                 }
         }
+}
+
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_device_direct(enum sprd_vdsp_worktype type , void **handle) {
+	*handle = sprd_vdsp_open_device(0 , type);
+	if(*handle == NULL) {
+		ALOGD("func:%s failed type:%d\n" , __func__ , type);
+		return SPRD_VDSP_RESULT_FAIL;
+	}
+	ALOGD("func:%s ok type:%d\n" , __func__ , type);
+	return SPRD_VDSP_RESULT_SUCCESS;
+}
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_device_direct(void *handle) {
+	sprd_vdsp_release_device(handle);
+	ALOGD("func:%s release device handle:%p\n" , __func__ , handle);
+	return SPRD_VDSP_RESULT_SUCCESS;
+}
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_cmd_direct(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+                                                struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority) {
+
+	int32_t ret1;
+	ret1 = sprd_vdsp_send_command_directly(handle , nsid ,(struct sprd_vdsp_inout*)in, (struct sprd_vdsp_inout*)out,
+							(struct sprd_vdsp_inout*)buffer ,bufnum,(enum sprd_xrp_queue_priority) priority);
+	if(ret1 == 0) {
+		ALOGD("func:%s result ok\n" , __func__);
+		return SPRD_VDSP_RESULT_SUCCESS;
+	}
+	else {
+		ALOGD("func:%s result fail\n" , __func__);
+		return SPRD_VDSP_RESULT_FAIL;
+	}
 }

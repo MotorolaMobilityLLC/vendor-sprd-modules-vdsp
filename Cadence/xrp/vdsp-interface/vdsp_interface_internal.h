@@ -45,6 +45,7 @@ extern "C" {
 					struct sprd_vdsp_inout *buffer ,  uint32_t buf_num, enum sprd_xrp_queue_priority priority);
 	int sprd_vdsp_load_library(void *device , struct sprd_vdsp_inout *buffer , const char *libname , enum sprd_xrp_queue_priority priority);
 	int sprd_vdsp_unload_library(void *device , const char *libname , enum sprd_xrp_queue_priority priority);
+	int sprd_vdsp_power_hint_direct(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
 #ifdef __cplusplus
 }
 #endif

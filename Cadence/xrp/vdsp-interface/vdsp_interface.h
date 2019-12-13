@@ -163,6 +163,10 @@ is restore to dvfs policy
 *************/
 enum sprd_vdsp_result sprd_cavdsp_power_hint(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
 
+enum sprd_vdsp_result sprd_cavdsp_open_device_direct(enum sprd_vdsp_worktype type , void **handle);
+enum sprd_vdsp_result sprd_cavdsp_close_device_direct(void *handle);
+enum sprd_vdsp_result sprd_cavdsp_send_cmd_direct(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+                                                struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority);
 
 // ion mem
 void* sprd_alloc_ionmem(uint32_t size, uint8_t iscache, int32_t* fd, void** viraddr);

@@ -6,6 +6,10 @@ __attribute__ ((visibility("default"))) struct xrp_device *sprd_xrp_open_device(
 {
 	return xrp_open_device(idx , XRP_OPEN_NORMAL_TYPE , status);
 }
+__attribute__ ((visibility("default"))) struct xrp_device *sprd_xrp_open_device_direct(int idx, enum xrp_status *status)
+{
+	return xrp_open_device_newmode(idx , XRP_OPEN_NORMAL_TYPE , status);
+}
 /*!
  * Increment device reference count.
  */

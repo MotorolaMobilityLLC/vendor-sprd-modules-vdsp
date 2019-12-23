@@ -84,6 +84,7 @@ void sprd_xrp_retain_device(struct xrp_device *device);
  */
 void sprd_xrp_release_device(struct xrp_device *device);
 
+void sprd_xrp_release_device_direct(struct xrp_device *device);
 /*!
  * @}
  */

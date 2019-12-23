@@ -1,6 +1,6 @@
 service service.vdspservice /vendor/bin/vdspserver
 	class main
-	user root
+	user system
 	group cameraserver
 
 on boot

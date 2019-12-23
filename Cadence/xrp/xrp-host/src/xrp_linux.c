@@ -168,6 +168,7 @@ void xrp_impl_release_device(struct xrp_device *device)
 void xrp_impl_release_device_newmode(struct xrp_device *device)
 {
 	close(device->impl.fd);
+	ALOGD("func:%s , close fd:%d" , __func__ , device->impl.fd);
 }
 
 /* Buffer API. */

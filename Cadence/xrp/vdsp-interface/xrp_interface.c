@@ -27,6 +27,10 @@ __attribute__ ((visibility("default"))) void sprd_xrp_release_device(struct xrp_
 	return xrp_release_device(device);
 }
 
+__attribute__ ((visibility("default"))) void sprd_xrp_release_device_direct(struct xrp_device *device)
+{
+	return xrp_release_device_newmode(device);
+}
 #ifdef USE_SPRD_MODE
 __attribute__ ((visibility("default"))) struct xrp_buffer *sprd_xrp_create_buffer(struct xrp_device *device,
                                      size_t size, void *host_ptr,int32_t fd,

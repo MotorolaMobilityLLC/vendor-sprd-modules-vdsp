@@ -44,13 +44,6 @@ void xrp_release_device(struct xrp_device *device)
 	}
 }
 
-void xrp_release_device_newmode(struct xrp_device *device)
-{
-	if (last_release_refcounted(device)) {
-		xrp_impl_release_device_newmode(device);
-		free(device);
-	}
-}
 /* Buffer API. */
 #ifdef USE_SPRD_MODE
 struct xrp_buffer *xrp_create_buffer(struct xrp_device *device,

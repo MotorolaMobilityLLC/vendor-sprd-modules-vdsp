@@ -50,7 +50,6 @@ struct xrp_queue_impl {
 };
 
 void xrp_impl_release_device(struct xrp_device *device);
-void xrp_impl_release_device_newmode(struct xrp_device *device);
 void xrp_impl_create_device_buffer(struct xrp_device *device,
 				   struct xrp_buffer *buffer,
 				   size_t size,

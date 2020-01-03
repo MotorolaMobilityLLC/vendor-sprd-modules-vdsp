@@ -36,7 +36,7 @@ __attribute__ ((visibility("default"))) void *sprd_vdsp_open_device(int idx , en
 }
 __attribute__ ((visibility("default"))) void sprd_vdsp_release_device(void *device)
 {
-	return xrp_release_device_newmode(device);
+	return xrp_release_device(device);
 }
 #ifdef USE_SPRD_MODE
 __attribute__ ((visibility("default"))) int sprd_vdsp_send_command(void *device , const char *nsid ,

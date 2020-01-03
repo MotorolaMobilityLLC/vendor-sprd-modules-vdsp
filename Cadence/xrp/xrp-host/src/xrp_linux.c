@@ -99,6 +99,7 @@ struct xrp_device *xrp_open_device(int idx, enum xrp_open_type type , enum xrp_s
 	}
 	device->impl.handle.fd = handle.fd;
 	device->impl.handle.generation = handle.generation;
+	device->type = XRP_DEVICE_NORMAL;
 	set_status(status, XRP_STATUS_SUCCESS);
 	return device;
 #else
@@ -153,23 +154,27 @@ struct xrp_device *xrp_open_device_newmode(int idx, enum xrp_open_type type , en
                 return NULL;
         }
         device->impl.fd = fd;
+	device->type = XRP_DEVICE_NEWMODE;
         set_status(status, XRP_STATUS_SUCCESS);
         return device;
 }
 void xrp_impl_release_device(struct xrp_device *device)
 {
 #ifdef USE_SPRD_MODE
-	sprd_cavdsp_close_device(&device->impl.handle);
+	if(device->type == XRP_DEVICE_NORMAL) {
+		sprd_cavdsp_close_device(&device->impl.handle);
+		ALOGD("func:%s close normal mode device" , __func__);
+	} else if(device->type == XRP_DEVICE_NEWMODE) {
+		close(device->impl.fd);
+		ALOGD("func:%s , close newmode fd:%d" , __func__ , device->impl.fd);
+	} else {
+		ALOGE("func:%s , close device error type:%d" , __func__ , device->type);
+	}
 #else
 	close(device->impl.fd);
 #endif
 }
 
-void xrp_impl_release_device_newmode(struct xrp_device *device)
-{
-	close(device->impl.fd);
-	ALOGD("func:%s , close fd:%d" , __func__ , device->impl.fd);
-}
 
 /* Buffer API. */
 

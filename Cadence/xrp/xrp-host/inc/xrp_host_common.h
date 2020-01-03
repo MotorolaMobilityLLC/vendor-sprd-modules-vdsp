@@ -33,9 +33,15 @@ struct xrp_refcounted {
 	_Atomic unsigned long count;
 };
 
+enum device_type{
+		XRP_DEVICE_NORMAL,
+		XRP_DEVICE_NEWMODE,
+};
+
 struct xrp_device {
 	struct xrp_refcounted ref;
 	struct xrp_device_impl impl;
+	enum device_type type;
 };
 enum buf_type{
 		XRP_BUFFER_TYPE_HOST,

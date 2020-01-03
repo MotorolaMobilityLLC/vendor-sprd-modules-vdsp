@@ -138,7 +138,6 @@ void xrp_retain_device(struct xrp_device *device);
  * counter gets down to zero).
  */
 void xrp_release_device(struct xrp_device *device);
-void xrp_release_device_newmode(struct xrp_device *device);
 /*!
  * @}
  */

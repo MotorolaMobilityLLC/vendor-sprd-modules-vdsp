@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vdsp_interface_internal.h"
-#include "example_namespace.h"
+#include "vdsp_namespace.h"
 #include <log/log_main.h>
 #include "xrp_kernel_defs.h"
 #include <sys/ioctl.h>
 #include "xrp_host_common.h"
+#include "vdsp_ion.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -285,10 +286,10 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_load_library(void *device 
 	int32_t fd = -1;
 	void *inputhandle = NULL;
 	void * inputaddr = NULL;
-	inputhandle = sprd_alloc_ionmem(USER_LIBRARY_CMD_LOAD_UNLOAD_INPUTSIZE , 0 , &fd , &inputaddr);
+	inputhandle = vdsp_alloc_ionmem(USER_LIBRARY_CMD_LOAD_UNLOAD_INPUTSIZE , 0 , &fd , &inputaddr);
         if(inputhandle == NULL)
         {
-		ALOGE("func:%s sprd_alloc_ionmem failed\n" , __func__);
+		ALOGE("func:%s vdsp_alloc_ionmem failed\n" , __func__);
                 return SPRD_XRP_STATUS_FAILURE;
         }
         input.fd = fd;
@@ -298,7 +299,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_load_library(void *device 
         sprintf(&input.vir_addr[1] , "%s" , libname);
 
 	ret = sprd_vdsp_send_command_directly(device , (const char *)XRP_EXAMPLE_V3_NSID , &input , NULL , buffer , 1 , priority);
-	sprd_free_ionmem(inputhandle);
+	vdsp_free_ionmem(inputhandle);
 	return ret;
 }
 __attribute__ ((visibility("default"))) int sprd_vdsp_unload_library(void *device , const char *libname , enum sprd_xrp_queue_priority priority)
@@ -308,10 +309,10 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_unload_library(void *devic
 	int32_t fd = -1;
 	void *inputhandle = NULL;
 	void * inputaddr = NULL;
-	inputhandle = sprd_alloc_ionmem(USER_LIBRARY_CMD_LOAD_UNLOAD_INPUTSIZE , 0 , &fd , &inputaddr);
+	inputhandle = vdsp_alloc_ionmem(USER_LIBRARY_CMD_LOAD_UNLOAD_INPUTSIZE , 0 , &fd , &inputaddr);
 	if(inputhandle == NULL)
 	{
-		ALOGE("func:%s sprd_alloc_ionmem failed\n" , __func__);
+		ALOGE("func:%s vdsp_alloc_ionmem failed\n" , __func__);
 		return ret;
 	}
 	input.fd = fd;
@@ -320,7 +321,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_unload_library(void *devic
 	input.vir_addr[0] = 2; /*unload flag*/
 	sprintf(&input.vir_addr[1] , "%s" , libname);
 	ret = sprd_vdsp_send_command_directly(device , (const char *)XRP_EXAMPLE_V3_NSID , &input , NULL , NULL , 0 , priority);
-	sprd_free_ionmem(inputhandle);
+	vdsp_free_ionmem(inputhandle);
 	return ret;
 }
 __attribute__ ((visibility("default"))) int sprd_vdsp_power_hint_direct(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)

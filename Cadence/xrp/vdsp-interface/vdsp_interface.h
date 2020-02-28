@@ -1,6 +1,6 @@
 #ifndef _SPRD_VDSP_INTERFACE__H
 #define _SPRD_VDSP_INTERFACE__H
-
+#include <sys/types.h>
 
 enum sprd_vdsp_status
 {
@@ -167,6 +167,10 @@ enum sprd_vdsp_result sprd_cavdsp_open_device_direct(enum sprd_vdsp_worktype typ
 enum sprd_vdsp_result sprd_cavdsp_close_device_direct(void *handle);
 enum sprd_vdsp_result sprd_cavdsp_send_cmd_direct(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
                                                 struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority);
+enum sprd_vdsp_result sprd_cavdsp_loadlibrary_direct(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer);
+enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_direct(void *handle , const char *libname);
+
+enum sprd_vdsp_result sprd_cavdsp_power_hint_direct(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
 
 // ion mem
 void* sprd_alloc_ionmem(uint32_t size, uint8_t iscache, int32_t* fd, void** viraddr);

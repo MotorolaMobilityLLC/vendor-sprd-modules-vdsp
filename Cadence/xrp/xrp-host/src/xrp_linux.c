@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <log/log_main.h>
+#include <android/log.h>
 #ifndef _UAPI_ASM_GENERIC_INT_LL64_H
 typedef uint32_t __u32;
 typedef uint64_t __u64;
@@ -39,10 +40,8 @@ typedef uint64_t __u64;
 #include "xrp_host_common.h"
 #include "xrp_host_impl.h"
 #include "xrp_kernel_defs.h"
-#ifdef USE_SPRD_MODE
 #include "vdsp_interface.h"
-#include <android/log.h>
-#endif
+#include "vdsp_ion.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -110,10 +109,10 @@ struct xrp_device *xrp_open_device(int idx, enum xrp_open_type type , enum xrp_s
         sprintf(name, "/dev/vdsp%u", idx);
         /*use open flag to distinguish normal boot or faceid boot*/
         if(type == XRP_OPEN_NORMAL_TYPE) {
-                fd = open(name, O_RDONLY);
+                fd = open(name, O_RDONLY | O_CLOEXEC);
         }
         else if(type == XRP_OPEN_FACEID_TYPE) {
-                fd = open(name, O_RDWR);
+                fd = open(name, O_RDWR | O_CLOEXEC);
         }
         if (fd == -1) {
                 set_status(status, XRP_STATUS_FAILURE);
@@ -138,10 +137,10 @@ struct xrp_device *xrp_open_device_newmode(int idx, enum xrp_open_type type , en
         sprintf(name, "/dev/vdsp%u", idx);
         /*use open flag to distinguish normal boot or faceid boot*/
         if(type == XRP_OPEN_NORMAL_TYPE) {
-                fd = open(name, O_RDONLY);
+                fd = open(name, O_RDONLY | O_CLOEXEC);
         }
         else if(type == XRP_OPEN_FACEID_TYPE) {
-                fd = open(name, O_RDWR);
+                fd = open(name, O_RDWR | O_CLOEXEC);
         }
 	ALOGD("xrp_open_device_newmode name:%s , type:%d , fd:%d\n" , name , type , fd);
         if (fd == -1) {
@@ -197,7 +196,7 @@ void xrp_impl_create_device_buffer(struct xrp_device *device,
 	xrp_retain_device(device);
 	buffer->device = device;
 #ifdef USE_SPRD_MODE
-	ionhandle = sprd_alloc_ionmem(size, 1 , &fd, &viraddr);
+	ionhandle = vdsp_alloc_ionmem(size, 1 , &fd, &viraddr);
 	if(ionhandle == NULL) {
 		xrp_release_device(buffer->device);
 		set_status(status, XRP_STATUS_FAILURE);
@@ -222,7 +221,7 @@ void xrp_impl_create_device_buffer(struct xrp_device *device,
 void xrp_impl_release_device_buffer(struct xrp_buffer *buffer)
 {
 #ifdef USE_SPRD_MODE
-	sprd_free_ionmem(buffer->ionhandle);
+	vdsp_free_ionmem(buffer->ionhandle);
 #else
 	struct xrp_ioctl_alloc ioctl_alloc = {
 		.addr = (uintptr_t)buffer->ptr,
@@ -473,7 +472,8 @@ static void xrp_request_process(struct xrp_queue_item *q,
 	if (rq->event) {
 		struct xrp_event *event = rq->event;
 		xrp_cond_lock(&event->impl.cond);
-		event->status = status;
+//		event->status = status;
+		atomic_store_explicit(&event->status , status , memory_order_seq_cst);
 		xrp_cond_broadcast(&event->impl.cond);
 		xrp_cond_unlock(&event->impl.cond);
 		xrp_release_event(event);

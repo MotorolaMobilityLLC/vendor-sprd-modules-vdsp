@@ -28,9 +28,10 @@
 #include "xrp_atomic.h"
 #include "xrp_thread_impl.h"
 #include "xrp_host_impl.h"
+#include <stdatomic.h>
 
 struct xrp_refcounted {
-	_Atomic unsigned long count;
+	atomic_ulong count;
 };
 
 enum device_type{
@@ -54,7 +55,7 @@ struct xrp_buffer {
 	void *ptr;
 	void *apptr;
 	size_t size;
-	_Atomic unsigned long map_count;
+	atomic_ulong map_count;
 	enum xrp_access_flags map_flags;
 	/*struct is zero size , remove for some strange byte offset issue, in some compile option it seems occpuied some bytes*/
 	/*struct xrp_buffer_impl impl;*/
@@ -87,7 +88,7 @@ struct xrp_queue {
 struct xrp_event {
 	struct xrp_refcounted ref;
 	struct xrp_queue *queue;
-	_Atomic enum xrp_status status;
+	atomic_int status;
 	struct xrp_event_impl impl;
 };
 
@@ -104,22 +105,30 @@ static inline void *alloc_refcounted(size_t sz)
 	void *buf = calloc(1, sz);
 	struct xrp_refcounted *ref = (struct xrp_refcounted *)buf;
 
-	if (ref)
-		ref->count = 1;
-
+	if (ref) {
+//		ref->count = 1;
+		atomic_store_explicit(&ref->count , (unsigned long)1 , memory_order_seq_cst);
+	}
 	return buf;
 }
 
 static inline void retain_refcounted(void *buf)
 {
 	struct xrp_refcounted *ref = (struct xrp_refcounted *)buf;
-	(void)++ref->count;
+//	(void)++ref->count;
+	atomic_fetch_add_explicit(&ref->count , (unsigned long)1 , memory_order_seq_cst);
 }
 
 static inline int last_release_refcounted(void *buf)
 {
 	struct xrp_refcounted *ref = (struct xrp_refcounted *)buf;
-	return --ref->count == 0;
+//	return --ref->count == 0;
+	return (atomic_fetch_sub_explicit(&ref->count , (unsigned long)1 , memory_order_seq_cst) == 1);
 }
 
+static inline int get_ref_count(void *buf)
+{
+	struct xrp_refcounted *ref = (struct xrp_refcounted *)buf;
+	return atomic_load_explicit(&ref->count , memory_order_seq_cst);
+}
 #endif

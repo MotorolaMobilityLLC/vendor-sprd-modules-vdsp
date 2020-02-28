@@ -119,14 +119,15 @@ struct xrp_event *xrp_event_create(void)
 	if (!event)
 		return NULL;
 	xrp_cond_init(&event->impl.cond);
-	event->status = XRP_STATUS_PENDING;
+//	event->status = XRP_STATUS_PENDING;
+	atomic_store_explicit( &event->status , XRP_STATUS_PENDING , memory_order_seq_cst);
 	return event;
 }
 
 void xrp_wait(struct xrp_event *event, enum xrp_status *status)
 {
 	xrp_cond_lock(&event->impl.cond);
-	while (event->status == XRP_STATUS_PENDING)
+	while (atomic_load_explicit(&event->status , memory_order_seq_cst) == XRP_STATUS_PENDING)
 		xrp_cond_wait(&event->impl.cond);
 	xrp_cond_unlock(&event->impl.cond);
 	set_status(status, XRP_STATUS_SUCCESS);

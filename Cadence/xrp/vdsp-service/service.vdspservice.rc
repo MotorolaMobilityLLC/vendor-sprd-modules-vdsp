@@ -1,8 +1,0 @@
-service service.vdspservice /vendor/bin/vdspserver
-	class main
-	user system
-	group cameraserver
-
-on boot
-	start service.vdspservice
-

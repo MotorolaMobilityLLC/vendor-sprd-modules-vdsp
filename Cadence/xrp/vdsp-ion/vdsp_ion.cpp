@@ -4,14 +4,13 @@
 #include <log/log.h>
 #include "sprd_ion.h"
 #include "VdspIon.h"
-#include "vdsp_interface.h"
+#include "vdsp_ion.h"
 #include "vdsp_interface_internal.h"
-
 
 using namespace android;
 
 
-__attribute__ ((visibility("default"))) void* sprd_alloc_ionmem(uint32_t size , uint8_t iscache , int32_t* fd , void** viraddr)
+void* vdsp_alloc_ionmem(uint32_t size , uint8_t iscache , int32_t* fd , void** viraddr)
 {
 	VdspIon *pHeapIon = NULL;
 	*fd = -1;
@@ -31,16 +30,17 @@ __attribute__ ((visibility("default"))) void* sprd_alloc_ionmem(uint32_t size , 
 		*viraddr = pHeapIon->getBase();
 		*fd = pHeapIon->getHeapID();
 	}
-	fprintf(stderr , "alloc ionmem viraddr:%p , fd:%d\n" , *viraddr , *fd);
+	ALOGD("func:%s pHeapIon:%p" , __func__ , pHeapIon);
 	return pHeapIon;
 }
-__attribute__ ((visibility("default"))) void* sprd_alloc_ionmem2(uint32_t size , uint8_t iscache , int32_t* fd , void** viraddr, unsigned long* phyaddr)
+
+void* vdsp_alloc_ionmem2(uint32_t size , uint8_t iscache , int32_t* fd , void** viraddr, unsigned long* phyaddr)
 {
 	VdspIon *pHeapIon = NULL;
 	*fd = -1;
 	*viraddr = NULL;
 	size_t size_ret = 0;
-	
+
 	if(iscache != 0)
 	{
 		//USE ION_HEAP_ID_MASK_MM temp , may be modify to SYSTEM
@@ -57,10 +57,9 @@ __attribute__ ((visibility("default"))) void* sprd_alloc_ionmem2(uint32_t size ,
 		*fd = pHeapIon->getHeapID();
 		pHeapIon->get_phy_addr_from_ion(phyaddr ,&size_ret);
 	}
-	fprintf(stderr , "alloc ionmem viraddr:%p , fd:%d, phyaddr %lX, size_ret %zu\n" , *viraddr , *fd, *phyaddr, size_ret);
 	return pHeapIon;
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_status sprd_flush_ionmem(void* handle , void* vaddr, void* paddr, uint32_t size)
+enum sprd_vdsp_status vdsp_flush_ionmem(void* handle , void* vaddr, void* paddr, uint32_t size)
 {
 	VdspIon* pHeapIon = (VdspIon*) handle;
 	if(pHeapIon != NULL)
@@ -74,7 +73,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_status sprd_flush_ionmem(
 	}
 	return SPRD_XRP_STATUS_FAILURE;
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_status sprd_invalid_ionmem(void* handle)
+enum sprd_vdsp_status vdsp_invalid_ionmem(void* handle)
 {
         VdspIon* pHeapIon = (VdspIon*) handle;
         if(pHeapIon != NULL)
@@ -86,7 +85,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_status sprd_invalid_ionme
         }
         return SPRD_XRP_STATUS_FAILURE;
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_status sprd_free_ionmem(void* handle)
+enum sprd_vdsp_status vdsp_free_ionmem(void* handle)
 {
 	enum sprd_vdsp_status ret;
 	VdspIon* pHeapIon = (VdspIon*) handle;
@@ -97,7 +96,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_status sprd_free_ionmem(v
 	}
 	else
 	{
-		fprintf(stderr , "input handle is NULL");
+		ALOGE("func:%s , input handle is NULL" , __func__);
 		ret = SPRD_XRP_STATUS_FAILURE;
 	}
 	return ret;

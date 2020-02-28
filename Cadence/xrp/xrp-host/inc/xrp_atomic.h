@@ -26,7 +26,7 @@
 
 #if !defined(HAVE_ATOMIC) || defined(__STDC_NO_ATOMICS__)
 //#warning The compiler does not support atomics, reference counting may not be thread safe
-#define _Atomic
+//#define _Atomic
 #endif
 
 #endif

@@ -24,10 +24,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <log/log_main.h>
+#include <android/log.h>
 #include "xrp_api.h"
 #include "xrp_host_common.h"
 
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG "xrp_host"
 
 /* Device API. */
 
@@ -38,6 +43,7 @@ void xrp_retain_device(struct xrp_device *device)
 
 void xrp_release_device(struct xrp_device *device)
 {
+	//ALOGD("func:%s , getcur refcount:%d" , __func__ , get_ref_count(device));
 	if (last_release_refcounted(device)) {
 		xrp_impl_release_device(device);
 		free(device);
@@ -132,6 +138,7 @@ void xrp_retain_buffer(struct xrp_buffer *buffer)
 
 void xrp_release_buffer(struct xrp_buffer *buffer)
 {
+	//ALOGD("func:%s , getcur refcount:%d" , __func__ , get_ref_count(buffer));
 	if (last_release_refcounted(buffer)) {
 		if (buffer->type == XRP_BUFFER_TYPE_DEVICE)
 			xrp_impl_release_device_buffer(buffer);
@@ -145,7 +152,8 @@ void *xrp_map_buffer(struct xrp_buffer *buffer, size_t offset, size_t size,
 	if (offset <= buffer->size &&
 	    size <= buffer->size - offset) {
 		retain_refcounted(buffer);
-		(void)++buffer->map_count;
+//		(void)++buffer->map_count;
+		atomic_fetch_add_explicit(&buffer->map_count , (unsigned long)1 , memory_order_seq_cst);
 		buffer->map_flags |= map_flags;
 		set_status(status, XRP_STATUS_SUCCESS);
 		return (char *)buffer->ptr + offset;
@@ -159,7 +167,8 @@ void xrp_unmap_buffer(struct xrp_buffer *buffer, void *p,
 {
 	if (p >= buffer->ptr &&
 	    (size_t)((char *)p - (char *)buffer->ptr) <= buffer->size) {
-		(void)--buffer->map_count;
+//		(void)--buffer->map_count;
+		atomic_fetch_sub_explicit(&buffer->map_count , (unsigned long)1 , memory_order_seq_cst);
 		xrp_release_buffer(buffer);
 		set_status(status, XRP_STATUS_SUCCESS);
 	} else {
@@ -226,6 +235,7 @@ void xrp_retain_buffer_group(struct xrp_buffer_group *group)
 
 void xrp_release_buffer_group(struct xrp_buffer_group *group)
 {
+	//ALOGD("func:%s , getcur refcount:%d" , __func__ , get_ref_count(group));
 	if (last_release_refcounted(group)) {
 		size_t i;
 
@@ -413,6 +423,7 @@ void xrp_retain_queue(struct xrp_queue *queue)
 
 void xrp_release_queue(struct xrp_queue *queue)
 {
+	//ALOGD("func:%s , getcur refcount:%d" , __func__ , get_ref_count(queue));
 	if (last_release_refcounted(queue)) {
 		xrp_impl_release_queue(queue);
 		xrp_release_device(queue->device);
@@ -430,6 +441,7 @@ void xrp_retain_event(struct xrp_event *event)
 
 void xrp_release_event(struct xrp_event *event)
 {
+	//ALOGD("func:%s , getcur refcount:%d" , __func__ , get_ref_count(event));
 	if (last_release_refcounted(event)) {
 		xrp_impl_release_event(event);
 		xrp_release_queue(event->queue);
@@ -439,7 +451,7 @@ void xrp_release_event(struct xrp_event *event)
 
 void xrp_event_status(struct xrp_event *event, enum xrp_status *status)
 {
-	set_status(status, event->status);
+	set_status(status, atomic_load_explicit(&event->status, memory_order_seq_cst));
 }
 
 /* Communication API */

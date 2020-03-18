@@ -6,6 +6,7 @@ PRODUCT_PACKAGES += libxrp-common \
 
 PRODUCT_COPY_FILES += \
     vendor/sprd/modules/vdsp/Cadence/xrp/vdsp-service/service.vdspservice.rc:vendor/etc/init/service.vdspservice.rc \
+    vendor/sprd/modules/vdsp/Cadence/xrp/init.sprd_vdsp.rc:vendor/etc/init/init.sprd_vdsp.rc \
 	vendor/sprd/modules/vdsp/Cadence/xrp/xrp-firmware/vdsp_firmware.bin:vendor/firmware/vdsp_firmware.bin \
 	vendor/sprd/modules/vdsp/Cadence/xrp/xrp-firmware/test_lib.o:/vendor/lib/test_lib.o \
 	vendor/sprd/modules/vdsp/Cadence/xrp/xrp-firmware/test_lib.bin:vendor/firmware/test_lib.bin \

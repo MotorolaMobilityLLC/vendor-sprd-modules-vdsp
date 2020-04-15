@@ -121,14 +121,14 @@ void* test_load_unload_lib(void* test)
 void* test_load_unload_lib_1(void* test)
 {
         struct sprd_vdsp_client_inout in,out;
-        uint32_t size = 8192;
+        uint32_t size = 81920;
         //struct vdsp_handle handle;
         int ret , ret1;
         int i;
         int openflag, closeflag, loadflag, unloadflag , cyclenum;
         FILE *fp;
         char filename[256];
-        int buffersize = 8192;
+        int buffersize = 81920;
         void *inputhandle;
         void *outputhandle;
         void *inviraddr;
@@ -223,17 +223,17 @@ void* test_load_unload_lib_1(void* test)
         }
         return NULL;
 }
-#if 0
+#if 1
 void* test_load_unload_lib_2(void* test)
 {
         struct sprd_vdsp_client_inout in,out;
-        uint32_t size = 8192;
+        uint32_t size = 81920;
       	struct vdsp_handle handle;
         int ret , ret1;
         int openflag, closeflag, loadflag, unloadflag;
         FILE *fp;
         char filename[256];
-        int buffersize = 8192;
+        int buffersize = 81920;
         void *inputhandle;
         void *outputhandle;
         void *inviraddr;
@@ -618,6 +618,9 @@ int main(__unused int argc , char *argv[]) {
                 control.libname1 = NULL;
                 control.powerhintlevel = 5;
                 pthread_create(&a , NULL , test_load_unload_lib_1 , &control);
+		break;
+	case 8:
+		pthread_create(&a , NULL , test_load_unload_lib_2 , &control);
 		break;
 	default:
 		break;

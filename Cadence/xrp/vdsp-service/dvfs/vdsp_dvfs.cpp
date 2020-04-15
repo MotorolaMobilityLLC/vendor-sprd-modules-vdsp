@@ -13,7 +13,8 @@
 
 #define DVFS_MONITOR_CYCLE_TIME   (1000*1000)
 using namespace android;
-int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uint32_t acquire_release)
+
+__attribute__ ((visibility("default"))) int32_t set_powerhint_flag(void *device , enum sprd_vdsp_power_level level , uint32_t acquire_release)
 {
 	int32_t ret;
 	struct xrp_device *dev = (struct xrp_device*) device;

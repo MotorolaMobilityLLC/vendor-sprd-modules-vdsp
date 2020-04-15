@@ -179,6 +179,13 @@ enum sprd_vdsp_status sprd_free_ionmem(void* handle);
 enum sprd_vdsp_status sprd_flush_ionmem(void* handle, void* vaddr, void* paddr, uint32_t size);
 enum sprd_vdsp_status sprd_invalid_ionmem(void* handle);
 
+enum sprd_vdsp_result sprd_cavdsp_open_device_byserver(enum sprd_vdsp_worktype type , struct vdsp_handle *handle);
+enum sprd_vdsp_result sprd_cavdsp_close_device_byserver(void *vdsphandle);
+enum sprd_vdsp_result sprd_cavdsp_send_cmd_byserver(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+							struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority);
+enum sprd_vdsp_result sprd_cavdsp_loadlibrary_byserver(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer);
+enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_byserver(void *handle , const char *libname);
+enum sprd_vdsp_result sprd_cavdsp_power_hint_byserver(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,4 @@
 
-
 #include <cutils/properties.h>
 #include <cutils/log.h>
 #include "vdsp_interface.h"
@@ -12,11 +11,10 @@
 #define LOG_TAG  "vdsp_interface"
 #endif
 
+//using namespace android;
+
 #define USE_FD_MAX_NUM  32
 #define CHECK_SUM_PROPERTY   "persist.vendor.vdsp.checksum"
-
-
-
 
 __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_device(enum sprd_vdsp_worktype type , struct vdsp_handle *handle)
 {

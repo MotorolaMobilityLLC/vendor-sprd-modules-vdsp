@@ -18,6 +18,7 @@ BUILD_ANDROID = ["1"]
 
 cc_library_shared {
     name: "libvdspservice",
+    owner: "sprd",
     system_ext_specific: true,
     vendor_available: true,
     cflags: [
@@ -30,13 +31,13 @@ cc_library_shared {
     include_dirs: [
         "vendor/sprd/external/kernel-headers",
         "system/core/base/include",
+	"vendor/sprd/interfaces/vdsp/",
+	"vendor/sprd/interfaces/vdsp/1.0/default",
     ],
     local_include_dirs: [
         "xrp-host/inc",
         "vdsp-interface",
         "vdsp-service/dvfs",
-        "vdsp-service",
-        "vdsp-interface",
         "vdsp-ion",
     ],
 
@@ -47,6 +48,7 @@ cc_library_shared {
 
     srcs: [
         "vdsp-interface/vdsp_interface.cpp",
+	"vdsp-interface/vdsp_server_interface.cpp",
         "vdsp-interface/sprd_vdsp_ion.cpp",
         "vdsp-service/dvfs/vdsp_dvfs.cpp",
         "vdsp-ion/vdsp_ion.cpp",
@@ -59,17 +61,22 @@ cc_library_shared {
     ],
 
     shared_libs: [
+	"libhidlbase",
         "libcutils",
 	"liblog",
         "libutils",
+	"vendor.sprd.hardware.vdsp@1.0",
     ],
-
-    compile_multilib: "both",
+    export_shared_lib_headers: [
+       "vendor.sprd.hardware.vdsp@1.0",
+    ],
 
 }
 
 cc_binary {
     name: "xrpclient",
+    system_ext_specific: true,
+    vendor_available: true,
     cflags: [
         "-fno-strict-aliasing",
         "-Wunused-variable",
@@ -101,8 +108,6 @@ cc_binary {
 	"liblog",
         "libvdspservice",
     ],
-    proprietary: true,
-    compile_multilib: "both",
 
 }
 

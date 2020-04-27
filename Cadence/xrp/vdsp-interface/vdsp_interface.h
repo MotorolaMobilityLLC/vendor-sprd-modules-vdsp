@@ -2,6 +2,11 @@
 #define _SPRD_VDSP_INTERFACE__H
 #include <sys/types.h>
 
+enum sprd_vdsp_getinfo_cmd
+{
+	SPRD_VDSP_GET_VERSION,
+	SPRD_VDSP_GET_MAX,
+};
 enum sprd_vdsp_status
 {
         SPRD_XRP_STATUS_SUCCESS = 0,
@@ -41,6 +46,8 @@ struct sprd_vdsp_client_inout
 	uint32_t size;
 	enum sprd_vdsp_bufflag flag;
 };
+
+
 enum sprd_vdsp_worktype
 {
 	SPRD_VDSP_WORK_NORMAL,
@@ -60,10 +67,23 @@ enum sprd_vdsp_powerhint_acquire_release
 	SPRD_VDSP_POWERHINT_RELEASE,
 	SPRD_VDSP_POWERHINT_MAX,
 };
+enum sprd_vdsp_interface_type
+{
+	SPRD_VDSP_INTERFACE_DIRECTLY,
+	SPRD_VDSP_INTERFACE_BYSERVER,
+	SPRD_VDSP_INTERFACe_MAX,
+};
+
 struct vdsp_handle
 {
         int32_t fd;
         uint32_t generation;
+};
+struct vdsp_open_param
+{
+	int32_t idx;
+	enum sprd_vdsp_worktype work_type;
+	enum sprd_vdsp_interface_type int_type;
 };
 typedef struct
 {
@@ -81,6 +101,8 @@ typedef struct
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+enum sprd_vdsp_result sprd_cavdsp_get_info(enum sprd_vdsp_getinfo_cmd cmd , void* output);
 
 /************************************************************
 open type is SPRD_VDSP_WORK_NORMAL for arithmetic firmwwareand SPRD_VDSP_WORK_FACEID for faceid firmware
@@ -163,14 +185,33 @@ is restore to dvfs policy
 *************/
 enum sprd_vdsp_result sprd_cavdsp_power_hint(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
 
-enum sprd_vdsp_result sprd_cavdsp_open_device_direct(enum sprd_vdsp_worktype type , void **handle);
-enum sprd_vdsp_result sprd_cavdsp_close_device_direct(void *handle);
-enum sprd_vdsp_result sprd_cavdsp_send_cmd_direct(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
-                                                struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority);
-enum sprd_vdsp_result sprd_cavdsp_loadlibrary_direct(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer);
-enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_direct(void *handle , const char *libname);
 
-enum sprd_vdsp_result sprd_cavdsp_power_hint_direct(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
+/*new interfaces*/
+/*
+type.work_type is SPRD_VDSP_WORK_NORMAL for arithmetic firmwwareand SPRD_VDSP_WORK_FACEID for faceid firmware
+type.int_type DIRECTLY is for call driver directly, BYSERVER is for ipc call to vdsp server and vdsp server call driver
+handle -------- handle.fd is fd; generation is xrp server generation
+return value: 0 is ok, other value is failed
+*/
+enum sprd_vdsp_result sprd_cavdsp_open_device_compat(struct vdsp_open_param *type , void **handle);
+
+enum sprd_vdsp_result sprd_cavdsp_close_device_compat(void *handle);
+enum sprd_vdsp_result sprd_cavdsp_send_cmd_compat(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+                                                struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority);
+enum sprd_vdsp_result sprd_cavdsp_loadlibrary_compat(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer);
+enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_compat(void *handle , const char *libname);
+enum sprd_vdsp_result sprd_cavdsp_power_hint_compat(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
+
+#if 1
+enum sprd_vdsp_result sprd_vdsp_open_device_direc(enum sprd_vdsp_worktype type , void **handle);
+enum sprd_vdsp_result sprd_vdsp_close_device_direc(void *handle);
+enum sprd_vdsp_result sprd_vdsp_send_cmd_direc(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+                                                struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority);
+enum sprd_vdsp_result sprd_vdsp_loadlibrary_direc(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer);
+enum sprd_vdsp_result sprd_vdsp_unloadlibrary_direc(void *handle , const char *libname);
+
+enum sprd_vdsp_result sprd_vdsp_power_hint_direc(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
+#endif
 
 // ion mem
 void* sprd_alloc_ionmem(uint32_t size, uint8_t iscache, int32_t* fd, void** viraddr);
@@ -178,7 +219,7 @@ void* sprd_alloc_ionmem2(uint32_t size, uint8_t iscache, int32_t* fd, void** vir
 enum sprd_vdsp_status sprd_free_ionmem(void* handle);
 enum sprd_vdsp_status sprd_flush_ionmem(void* handle, void* vaddr, void* paddr, uint32_t size);
 enum sprd_vdsp_status sprd_invalid_ionmem(void* handle);
-
+#if 0
 enum sprd_vdsp_result sprd_cavdsp_open_device_byserver(enum sprd_vdsp_worktype type , struct vdsp_handle *handle);
 enum sprd_vdsp_result sprd_cavdsp_close_device_byserver(void *vdsphandle);
 enum sprd_vdsp_result sprd_cavdsp_send_cmd_byserver(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
@@ -186,7 +227,7 @@ enum sprd_vdsp_result sprd_cavdsp_send_cmd_byserver(void *handle , const char *n
 enum sprd_vdsp_result sprd_cavdsp_loadlibrary_byserver(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer);
 enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_byserver(void *handle , const char *libname);
 enum sprd_vdsp_result sprd_cavdsp_power_hint_byserver(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
-
+#endif
 #ifdef __cplusplus
 }
 #endif

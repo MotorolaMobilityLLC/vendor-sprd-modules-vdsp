@@ -1,9 +1,12 @@
-
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <cutils/properties.h>
 #include <cutils/log.h>
 #include "vdsp_interface.h"
 #include "xrp_interface.h"
 #include "vdsp_interface_internal.h"
+#include "vdsp_server_interface.h"
 #include "vdsp_dvfs.h"
 
 #ifdef LOG_TAG
@@ -15,6 +18,30 @@
 
 #define USE_FD_MAX_NUM  32
 #define CHECK_SUM_PROPERTY   "persist.vendor.vdsp.checksum"
+
+struct vdsp_wrap_handle
+{
+	enum sprd_vdsp_interface_type type;
+	void *handle;
+};
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_get_info(enum sprd_vdsp_getinfo_cmd cmd , void *output)
+{
+	enum sprd_vdsp_result ret = SPRD_VDSP_RESULT_SUCCESS;
+	switch(cmd) {
+	case SPRD_VDSP_GET_VERSION:
+		strcpy((char*)output , "ver_1.1");
+		ALOGD("func:%s ver:%s" , __func__ ,  output);
+		break;
+	default:
+		ret = SPRD_VDSP_RESULT_FAIL;
+		ALOGD("func:%s cmd:%d" , __func__ , cmd);
+		break;
+	}
+	return ret;
+}
+
+
 
 __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_device(enum sprd_vdsp_worktype type , struct vdsp_handle *handle)
 {
@@ -142,7 +169,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
 }
 
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_device_direct(enum sprd_vdsp_worktype type , void **handle) {
+enum sprd_vdsp_result sprd_vdsp_open_device_direc(enum sprd_vdsp_worktype type , void **handle) {
 	*handle = sprd_vdsp_open_device(0 , type);
 	if(*handle == NULL) {
 		ALOGD("func:%s failed type:%d\n" , __func__ , type);
@@ -152,13 +179,13 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
 	return SPRD_VDSP_RESULT_SUCCESS;
 }
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_device_direct(void *handle) {
+enum sprd_vdsp_result sprd_vdsp_close_device_direc(void *handle) {
 	sprd_vdsp_release_device(handle);
 	ALOGD("func:%s release device handle:%p\n" , __func__ , handle);
 	return SPRD_VDSP_RESULT_SUCCESS;
 }
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_cmd_direct(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+enum sprd_vdsp_result sprd_vdsp_send_cmd_direc(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
                                                 struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority) {
 
 	int32_t ret1;
@@ -173,7 +200,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_c
 		return SPRD_VDSP_RESULT_FAIL;
 	}
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadlibrary_direct(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer)
+enum sprd_vdsp_result sprd_vdsp_loadlibrary_direc(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer)
 {
 	int ret;
 	ret = sprd_vdsp_load_library(handle , (struct sprd_vdsp_inout*)buffer , libname , SPRD_XRP_PRIORITY_2);
@@ -183,7 +210,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadli
 		return SPRD_VDSP_RESULT_FAIL;
 	}
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_direct(void *handle , const char *libname)
+enum sprd_vdsp_result sprd_vdsp_unloadlibrary_direc(void *handle , const char *libname)
 {
 	int ret;
 	ret = sprd_vdsp_unload_library(handle , libname , SPRD_XRP_PRIORITY_2);
@@ -193,7 +220,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unload
 		return SPRD_VDSP_RESULT_FAIL;
 	}
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_hint_direct(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)
+enum sprd_vdsp_result sprd_vdsp_power_hint_direc(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)
 {
 	int ret;
 	ret = set_powerhint_flag(handle , level , acquire_release);
@@ -201,4 +228,169 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_
 		return SPRD_VDSP_RESULT_SUCCESS;
 	else
 		return SPRD_VDSP_RESULT_FAIL;
+}
+
+
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_device_compat(struct vdsp_open_param *type , void **handle)
+{
+        enum sprd_vdsp_result ret = SPRD_VDSP_RESULT_FAIL;
+	void *directhandle = NULL;
+	struct vdsp_wrap_handle *wrap_handle = (struct vdsp_wrap_handle *) malloc(sizeof(struct vdsp_wrap_handle));
+	if(wrap_handle == NULL) {
+		return ret;
+	}
+	*handle = NULL;
+        switch(type->int_type)
+        {
+        case SPRD_VDSP_INTERFACE_DIRECTLY:
+		ret = sprd_vdsp_open_device_direc(type->work_type , &directhandle);
+		if(ret == SPRD_VDSP_RESULT_SUCCESS) {
+			wrap_handle->type = SPRD_VDSP_INTERFACE_DIRECTLY;
+			wrap_handle->handle = directhandle;
+			*handle = wrap_handle;
+		}
+		else {
+			free(wrap_handle);
+		}
+                break;
+        case SPRD_VDSP_INTERFACE_BYSERVER:
+	{
+		struct vdsp_handle *vdsphandle = (struct vdsp_handle*) malloc(sizeof(struct vdsp_handle));
+		if(vdsphandle == NULL)
+		{
+			free(wrap_handle);
+			return ret;
+		}
+		ret = sprd_vdsp_open_device_serv(type->work_type , vdsphandle);
+		if(ret == SPRD_VDSP_RESULT_SUCCESS) {
+			wrap_handle->type = SPRD_VDSP_INTERFACE_BYSERVER;
+			wrap_handle->handle = vdsphandle;
+			*handle = wrap_handle;
+		}
+		else
+		{
+			free(wrap_handle);
+			free(vdsphandle);
+		}
+                break;
+        }
+	default:
+                break;
+        }
+	ALOGD("func:%s result:%d" , __func__ , ret);
+        return ret;
+}
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_device_compat(void *handle)
+{
+	enum sprd_vdsp_result ret = SPRD_VDSP_RESULT_FAIL;
+	struct vdsp_wrap_handle *wrap_handle = (struct vdsp_wrap_handle *) handle;
+	if((wrap_handle == NULL) || (wrap_handle->handle == NULL))
+	{
+		ALOGE("func:%s ret:%d" , __func__ ,ret);
+		return ret;
+	}
+	switch(wrap_handle->type)
+	{
+	case SPRD_VDSP_INTERFACE_DIRECTLY:
+		ret = sprd_vdsp_close_device_direc(wrap_handle->handle);
+		if(ret == SPRD_VDSP_RESULT_SUCCESS)
+		{
+			free(wrap_handle);
+		}
+		break;
+	case SPRD_VDSP_INTERFACE_BYSERVER:
+		ret = sprd_vdsp_close_device_serv(wrap_handle->handle);
+		if((ret == SPRD_VDSP_RESULT_SUCCESS) || (ret == SPRD_VDSP_RESULT_OLD_GENERATION))
+		{
+			free(wrap_handle->handle);
+			free(wrap_handle);
+		}
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_cmd_compat(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+                                                struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority)
+{
+	struct vdsp_wrap_handle *wrap_handle = (struct vdsp_wrap_handle *) handle;
+	enum sprd_vdsp_result ret = SPRD_VDSP_RESULT_FAIL;
+	if((wrap_handle == NULL) || (wrap_handle->handle == NULL)) {
+		return ret;
+	}
+	switch(wrap_handle->type) {
+	case SPRD_VDSP_INTERFACE_DIRECTLY:
+		ret = sprd_vdsp_send_cmd_direc(wrap_handle->handle , nsid , in ,out , buffer ,bufnum , priority);
+		break;
+	case SPRD_VDSP_INTERFACE_BYSERVER:
+		ret = sprd_vdsp_send_cmd_serv(wrap_handle->handle , nsid , in ,out , buffer ,bufnum , priority);
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadlibrary_compat(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer)
+{
+	struct vdsp_wrap_handle *wrap_handle = (struct vdsp_wrap_handle *) handle;
+	enum sprd_vdsp_result ret = SPRD_VDSP_RESULT_FAIL;
+	if((wrap_handle == NULL) || (wrap_handle->handle == NULL)) {
+		return ret;
+	}
+	switch(wrap_handle->type) {
+	case SPRD_VDSP_INTERFACE_DIRECTLY:
+		ret = sprd_vdsp_loadlibrary_direc(wrap_handle->handle , libname , buffer);
+		break;
+	case SPRD_VDSP_INTERFACE_BYSERVER:
+		ret = sprd_vdsp_loadlibrary_serv(wrap_handle->handle , libname , buffer);
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_compat(void *handle , const char *libname)
+{
+	struct vdsp_wrap_handle *wrap_handle = (struct vdsp_wrap_handle *) handle;
+	enum sprd_vdsp_result ret = SPRD_VDSP_RESULT_FAIL;
+	if((wrap_handle == NULL) || (wrap_handle->handle == NULL)) {
+		return ret;
+	}
+	switch(wrap_handle->type) {
+	case SPRD_VDSP_INTERFACE_DIRECTLY:
+		ret = sprd_vdsp_unloadlibrary_direc(wrap_handle->handle , libname);
+		break;
+	case SPRD_VDSP_INTERFACE_BYSERVER:
+		ret = sprd_vdsp_unloadlibrary_serv(wrap_handle->handle , libname);
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_hint_compat(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)
+{
+	struct vdsp_wrap_handle *wrap_handle = (struct vdsp_wrap_handle *) handle;
+	enum sprd_vdsp_result ret = SPRD_VDSP_RESULT_FAIL;
+	if((wrap_handle == NULL) || (wrap_handle->handle == NULL)) {
+		return ret;
+	}
+	switch(wrap_handle->type) {
+	case SPRD_VDSP_INTERFACE_DIRECTLY:
+		ret = sprd_vdsp_power_hint_direc(wrap_handle->handle , level , acquire_release);
+		break;
+	case SPRD_VDSP_INTERFACE_BYSERVER:
+		ret = sprd_vdsp_power_hint_serv(wrap_handle->handle , level , acquire_release);
+		break;
+	default:
+		break;
+	}
+	return ret;
 }

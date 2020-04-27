@@ -20,7 +20,7 @@
 #include "xrp_interface.h"
 #include "VdspService.h"
 #include "vdsp_interface_internal.h"
-
+#include "vdsp_server_interface.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -202,7 +202,7 @@ static int32_t putVdspService()
 	return 0;
 }
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_device_byserver(enum sprd_vdsp_worktype type , struct vdsp_handle *handle)
+enum sprd_vdsp_result sprd_vdsp_open_device_serv(enum sprd_vdsp_worktype type , struct vdsp_handle *handle)
 {
 	sp<IVdspService> cs = NULL;
 	enum sprd_vdsp_result result;
@@ -265,7 +265,7 @@ __openok:
 	return SPRD_VDSP_RESULT_SUCCESS;
 }
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_device_byserver(void *handle)
+enum sprd_vdsp_result sprd_vdsp_close_device_serv(void *handle)
 {
 	sp<IVdspService> cs = NULL;
 	enum sprd_vdsp_result result;
@@ -333,7 +333,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_close_
 	return SPRD_VDSP_RESULT_FAIL;
 }
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_send_cmd_byserver(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
+enum sprd_vdsp_result sprd_vdsp_send_cmd_serv(void *handle , const char *nsid , struct sprd_vdsp_client_inout *in, struct sprd_vdsp_client_inout *out ,
                                                 struct sprd_vdsp_client_inout *buffer , uint32_t bufnum , uint32_t priority)
 {
 	sp<IVdspService> cs = NULL;
@@ -442,7 +442,7 @@ __err_return_unlock:
 	return (enum sprd_vdsp_result)ret;
 }
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadlibrary_byserver(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer)
+enum sprd_vdsp_result sprd_vdsp_loadlibrary_serv(void *handle , const char *libname , struct sprd_vdsp_client_inout *buffer)
 {
 	sp<IVdspService> cs = NULL;
 	enum sprd_vdsp_result result;
@@ -511,7 +511,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_loadli
 	}
 }
 
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unloadlibrary_byserver(void *handle , const char *libname)
+enum sprd_vdsp_result sprd_vdsp_unloadlibrary_serv(void *handle , const char *libname)
 {
 	sp<IVdspService> cs = NULL;
 	enum sprd_vdsp_result result;
@@ -568,7 +568,7 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_unload
 		}
 	}
 }
-__attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_power_hint_byserver(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)
+enum sprd_vdsp_result sprd_vdsp_power_hint_serv(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release)
 {
 	sp<IVdspService> cs = NULL;
         enum sprd_vdsp_result result;

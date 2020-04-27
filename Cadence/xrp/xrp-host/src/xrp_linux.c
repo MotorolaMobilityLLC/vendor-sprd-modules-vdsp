@@ -320,7 +320,7 @@ static void _xrp_run_command(struct xrp_queue *queue,
 			output.size = out_data_size;
 			output.flag = 0;
 		}
-		ret = sprd_cavdsp_send_cmd_direct(queue->device , queue->nsid , pinput , poutput ,
+		ret = sprd_vdsp_send_cmd_direc(queue->device , queue->nsid , pinput , poutput ,
                                                 buffer , n_buffers , queue->priority);
 		if(buffer != NULL) {
 			free(buffer);

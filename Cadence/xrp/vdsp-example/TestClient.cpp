@@ -226,6 +226,165 @@ void* test_load_unload_lib_2(void* test)
 	return NULL;
 }
 #endif
+typedef struct
+{
+	int x, y, width, height;
+	int yawAngle, pitchAngle;
+	int ret;
+	unsigned int facepoint_addr;
+}FACEID_INFO;
+/*
+ * Help info from hal.
+ * The first part: one int32 is CONTROL_AE_STATE;
+ * The second part: one int32 is ae info. Bit 31-16 is the bv value,which is a signed value. 
+ *                              Bit 10-1 is the probability of backlight, range[0-1000].
+ *                              Bit 0 is whether ae is stable, range[0, 1].
+ * The third part: 256 int32 is hist_statistics.
+ * The fouth part: one int32 is the phone orientation info.
+ */
+typedef struct
+{
+    const int32_t *helpInfo;
+    int32_t count;
+} FACEID_HELPINFO;
+
+void* thread_faceid(__unused void* test)
+{
+	struct sprd_vdsp_client_inout in,out,image;
+	uint32_t devid = 30;
+	uint32_t liveness = 1;
+	void* handle;
+	int ret;
+	FILE *fp;
+	char filename[256];
+	void *inputhandle;
+	void *outputhandle;
+	void *imagehandle;
+	FACEID_INFO *face_info;
+	int64_t start_time,end_time,duration;
+	unsigned long inphyaddr;
+	FACEID_IN *faceid_in;
+	uint32_t w = 960, h = 720;
+	struct vdsp_open_param open_param;
+
+	open_param.idx = 0;
+	open_param.work_type = SPRD_VDSP_WORK_FACEID;
+	open_param.int_type = SPRD_VDSP_INTERFACE_DIRECTLY;
+
+	/*camera simulation*/
+	image.size = w*h*3/2;
+	imagehandle = sprd_alloc_ionmem2(image.size , 0 , &image.fd , &image.viraddr, &inphyaddr);
+	image.phy_addr = inphyaddr;
+
+	sprintf(filename , "/vendor/bin/test.yuv" );
+    fp = fopen(filename , "rb");
+    if(fp) {
+            ret = fread(image.viraddr , 1, image.size , fp);
+            fprintf(stderr , "%s , fread size:%d\n" , __func__ , ret);
+            fclose(fp);
+    }
+    else
+    {
+            fprintf(stderr , "fopen test.yuv failed\n");
+			return NULL;
+    }
+
+	/*input ion*/
+	in.size = sizeof(FACEID_IN);
+	inputhandle = sprd_alloc_ionmem(in.size, 0 , &in.fd , &in.viraddr);
+	if(inputhandle != NULL)
+	{
+		memset(in.viraddr , 0x00 , in.size);
+	}
+
+	faceid_in = (FACEID_IN*)in.viraddr;
+	faceid_in->height = h;
+	faceid_in->width = w;
+	faceid_in->workstage = 0;/*enroll*/
+	faceid_in->framecount = 0;
+	faceid_in->liveness = liveness;
+	faceid_in->phyaddr = image.phy_addr;
+	faceid_in->help_info[0] = 0xFF;
+	faceid_in->l_ir_phyaddr = 0x12;
+	faceid_in->r_ir_phyaddr = 0x34;
+	faceid_in->bgr_phyaddr = 0x56;
+	faceid_in->otp_phyaddr = 0x78;
+
+	/*out ion*/
+	out.size = sizeof(FACEID_INFO);
+	outputhandle = sprd_alloc_ionmem(out.size , 0 , &out.fd , &out.viraddr);
+	out.phy_addr = 0;
+
+
+	if(outputhandle != NULL)
+	{
+		memset(out.viraddr , 0x00 , out.size);
+	}
+#if 0
+	/*move up DDR frequency*/
+	FILE *dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs", "wb");
+	if (dfs_fp == NULL) {
+		printf("fail to open file for DFS: %d ", errno);
+	}
+	else
+	{
+		fprintf(dfs_fp, "%s", "faceid");
+		fclose(dfs_fp);
+		dfs_fp= NULL;
+	}
+#endif
+	start_time = systemTime(CLOCK_MONOTONIC);
+
+	ret = sprd_cavdsp_open_device_compat(&open_param , &handle);
+	end_time = systemTime(CLOCK_MONOTONIC);
+	duration = (int)((end_time - start_time)/1000000);
+	printf("open take %ld ms\n",duration);
+
+	if(SPRD_VDSP_RESULT_SUCCESS != ret)
+	{
+		printf("----------open device fail-------------\n");
+		sprd_free_ionmem(imagehandle);
+		sprd_free_ionmem(inputhandle);
+		sprd_free_ionmem(outputhandle);
+		return NULL;
+	}
+	start_time = systemTime(CLOCK_MONOTONIC);
+
+	//for(int i = 0;i<devid;i++)
+	{
+		ret = sprd_cavdsp_send_cmd_compat(handle , "faceid_fw" , &in , &out , NULL , 0 , 1);
+		if (SPRD_VDSP_RESULT_SUCCESS != ret)
+			fprintf(stderr , "xrp_run_faceid_command failed\n");
+		else
+		{
+			face_info = (FACEID_INFO *)out.viraddr;
+			fprintf(stderr ,"vdsp result %d,out addr %X\n",face_info->ret,face_info->facepoint_addr);
+			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
+		}
+
+	}
+	end_time = systemTime(CLOCK_MONOTONIC);
+	duration = (int)((end_time - start_time)/1000000);
+	printf("run %d times take %ld ms\n",devid,duration/devid);
+	sprd_cavdsp_close_device_compat(handle);
+#if 0
+	/*move down DDR frequency*/
+	dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd_governor/exit_scene", "wb");
+	if (dfs_fp == NULL) {
+		printf("fail to open file for DFS: %d ", errno);
+	}
+	else
+	{
+		fprintf(dfs_fp, "%s", "faceid");
+		fclose(dfs_fp);
+		dfs_fp = NULL;
+	}
+#endif
+	sprd_free_ionmem(imagehandle);
+	sprd_free_ionmem(inputhandle);
+	sprd_free_ionmem(outputhandle);
+	return NULL;
+}
 
 #if 1
 /*cmd mode
@@ -363,11 +522,14 @@ int main(__unused int argc , char *argv[]) {
 	case 8:
 		pthread_create(&a , NULL , test_load_unload_lib_2 , &control);
 		break;
+	case 9:
+		thread_faceid(NULL);
+		break;
 	default:
 		break;
 	}
-	while(1)
-		usleep(100000);
+	//while(1)
+	//	usleep(100000);
 	//ProcessState::self()->startThreadPool();
           //              IPCThreadState::self()->joinThreadPool();
 	return 0;

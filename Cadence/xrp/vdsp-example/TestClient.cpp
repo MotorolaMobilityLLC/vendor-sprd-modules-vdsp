@@ -322,7 +322,7 @@ void* thread_faceid(__unused void* test)
 	}
 #if 0
 	/*move up DDR frequency*/
-	FILE *dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs", "wb");
+	FILE *dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd-governor/scenario_dfs", "wb");
 	if (dfs_fp == NULL) {
 		printf("fail to open file for DFS: %d ", errno);
 	}
@@ -369,7 +369,7 @@ void* thread_faceid(__unused void* test)
 	sprd_cavdsp_close_device_compat(handle);
 #if 0
 	/*move down DDR frequency*/
-	dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd_governor/exit_scene", "wb");
+	dfs_fp = fopen("/sys/class/devfreq/scene-frequency/sprd-governor/exit_scene", "wb");
 	if (dfs_fp == NULL) {
 		printf("fail to open file for DFS: %d ", errno);
 	}

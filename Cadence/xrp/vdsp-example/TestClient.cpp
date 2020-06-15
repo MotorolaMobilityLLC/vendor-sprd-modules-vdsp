@@ -291,7 +291,7 @@ void* thread_faceid(__unused void* test)
 
 	/*input ion*/
 	in.size = sizeof(FACEID_IN);
-	inputhandle = sprd_alloc_ionmem(in.size, 0 , &in.fd , &in.viraddr);
+	inputhandle = sprd_alloc_ionmem(4096, 0 , &in.fd , &in.viraddr);
 	if(inputhandle != NULL)
 	{
 		memset(in.viraddr , 0x00 , in.size);
@@ -357,7 +357,8 @@ void* thread_faceid(__unused void* test)
 			fprintf(stderr , "xrp_run_faceid_command failed\n");
 		else
 		{
-			face_info = (FACEID_INFO *)out.viraddr;
+			void* out_var = (char*)in.viraddr + 2048;
+			face_info = (FACEID_INFO *)out_var;//out.viraddr;
 			fprintf(stderr ,"vdsp result %d,out addr %X\n",face_info->ret,face_info->facepoint_addr);
 			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
 		}

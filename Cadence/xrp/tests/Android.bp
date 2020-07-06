@@ -1,0 +1,28 @@
+
+
+cc_defaults {
+    name: "vdsp_test_defaults",
+    shared_libs: [
+        "libutils",
+        "libcutils",
+        "liblog",
+    ],
+    static_libs: ["libvdspservice_gtest"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-missing-field-initializers",
+    ],
+}
+
+cc_test{
+    name: "vdsp_if_test",
+    defaults: ["vdsp_test_defaults"],
+    srcs: [
+        "main_test.cpp",
+        "vdsp_if_test.cpp"
+    ],
+    test_suites:[
+        "units",
+    ],
+}

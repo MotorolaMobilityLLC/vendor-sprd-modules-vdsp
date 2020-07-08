@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 #include <utils/Timers.h>
 #include "vdsp_interface.h"
 #include <stdlib.h>
@@ -338,7 +339,7 @@ void* thread_faceid(__unused void* test)
 	ret = sprd_cavdsp_open_device_compat(&open_param , &handle);
 	end_time = systemTime(CLOCK_MONOTONIC);
 	duration = (int)((end_time - start_time)/1000000);
-	printf("open take %ld ms\n",duration);
+	printf("open take %" PRId64 " ms\n",duration);
 
 	if(SPRD_VDSP_RESULT_SUCCESS != ret)
 	{
@@ -366,7 +367,7 @@ void* thread_faceid(__unused void* test)
 	}
 	end_time = systemTime(CLOCK_MONOTONIC);
 	duration = (int)((end_time - start_time)/1000000);
-	printf("run %d times take %ld ms\n",devid,duration/devid);
+	printf("run %d times take %" PRId64 " ms\n",devid,duration/devid);
 	sprd_cavdsp_close_device_compat(handle);
 #if 0
 	/*move down DDR frequency*/

@@ -99,6 +99,7 @@ typedef struct
 	uint32_t framecount;
 	uint32_t liveness;		/*0:off 1:faceid_single 2:faceid_3D 3:pay_3D*/
 	int32_t  help_info[259];		/*AE BV*/
+	uint32_t fd_info[15];		/*Face Info from Hal*/
 	uint32_t l_ir_phyaddr;	/*Left IR phyaddr*/
 	uint32_t r_ir_phyaddr;	/*Right IR phyaddr*/
 	uint32_t bgr_phyaddr;	/*bgr phyaddr*/
@@ -328,7 +329,6 @@ return value:
 NULL is failed
 *************/
 void* sprd_alloc_ionmem(uint32_t size, uint8_t iscache, int32_t* fd, void** viraddr);
-
 /***********************************************************************
 name: sprd_alloc_ionmem2
 description: alloc ion memory with output virtual address and physical address

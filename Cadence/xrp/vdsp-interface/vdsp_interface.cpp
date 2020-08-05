@@ -50,6 +50,9 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
 	void *hnddev = NULL;
 	hnddev = sprd_vdsp_open_device(0 , type);
 	if((hnddev == NULL) || (handle == NULL)) {
+		if(hnddev != NULL) {
+			sprd_vdsp_release_device(hnddev);
+		}
 		ALOGD("func:%s failed type:%d\n" , __func__ , type);
 		return SPRD_VDSP_RESULT_FAIL;
 	}
@@ -279,6 +282,8 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
                 break;
         }
 	default:
+		free(wrap_handle);
+		ALOGE("func:%s , error int type:%d" , __func__ , type->int_type);
                 break;
         }
 	ALOGD("func:%s result:%d" , __func__ , ret);

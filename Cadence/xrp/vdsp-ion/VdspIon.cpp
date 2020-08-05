@@ -475,6 +475,7 @@ int VdspIon::Get_kaddr(int buffer_fd, uint64_t *kaddr, size_t *size) {
       *size = kmap_data.size;
     } else {
       ALOGE("%s: not supported", __func__);
+      close(fd);
       return MEMION_NOT_SUPPORTED;
     }
     close(fd);
@@ -536,6 +537,7 @@ int VdspIon::Free_kaddr(int buffer_fd) {
       ret = ioctl(fd, ION_IOC_CUSTOM, &custom_data);
     } else {
       ALOGE("%s: not supported", __func__);
+      close(fd);
       return MEMION_NOT_SUPPORTED;
     }
 

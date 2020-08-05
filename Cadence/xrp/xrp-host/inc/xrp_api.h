@@ -106,7 +106,6 @@ typedef struct
 	int ret;
 	unsigned int facepoint_addr;
 }FACEID_INFO;
-#define XRP_NAMESPACE_ID_SIZE	32
 
 /*!
  * \defgroup device_api Device API

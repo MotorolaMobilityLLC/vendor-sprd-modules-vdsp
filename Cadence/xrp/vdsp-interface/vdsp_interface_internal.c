@@ -57,6 +57,11 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command(void *device 
 	uint32_t inputsize = 0;
 	uint32_t outputsize = 0;
 	enum sprd_vdsp_status ret = SPRD_XRP_STATUS_SUCCESS;
+	if(strlen(nsid) > (XRP_NAMESPACE_ID_SIZE - 1))
+	{
+		ALOGE("func:%s nsid is too long" , __func__);
+		return SPRD_XRP_STATUS_FAILURE;
+	}
 	if(input != NULL)
 	{
 		input_vir = input->vir_addr;
@@ -166,9 +171,14 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 	uint32_t inputsize = 0;
 	uint32_t outputsize = 0;
 	FACEID_IN *faceid_in;
-	
+
 	char ns_id[XRP_NAMESPACE_ID_SIZE];
-    enum sprd_vdsp_status ret = SPRD_XRP_STATUS_SUCCESS;
+	enum sprd_vdsp_status ret = SPRD_XRP_STATUS_SUCCESS;
+	if(strlen(nsid) > (XRP_NAMESPACE_ID_SIZE - 1))
+	{
+		ALOGE("func:%s nsid is too long" , __func__);
+		return SPRD_XRP_STATUS_FAILURE;
+	}
 	memset(ns_id , 0 , XRP_NAMESPACE_ID_SIZE);
 	strncpy(ns_id , nsid , strlen(nsid));
 

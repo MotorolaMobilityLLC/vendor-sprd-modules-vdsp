@@ -149,6 +149,7 @@ struct xrp_device *xrp_open_device_newmode(int idx, enum xrp_open_type type , en
         }
         device = alloc_refcounted(sizeof(*device));
         if (!device) {
+                close(fd);
                 set_status(status, XRP_STATUS_FAILURE);
                 return NULL;
         }

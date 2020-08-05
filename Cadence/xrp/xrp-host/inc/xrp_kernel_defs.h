@@ -39,6 +39,7 @@
 #define XRP_IOCTL_SET_POWERHINT _IO(XRP_IOCTL_MAGIC, 7)
 
 #define XRP_DSP_CMD_INLINE_DATA_SIZE 16
+#define XRP_NAMESPACE_ID_SIZE   32
 
 struct xrp_ioctl_alloc {
 	__u32 size;

@@ -29,6 +29,7 @@
 #include "xrp_thread_impl.h"
 #include "xrp_host_impl.h"
 #include <stdatomic.h>
+#include "xrp_kernel_defs.h"
 
 struct xrp_refcounted {
 	atomic_ulong count;

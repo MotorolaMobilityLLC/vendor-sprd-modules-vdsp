@@ -28,6 +28,7 @@
 #include <android/log.h>
 #include "xrp_api.h"
 #include "xrp_host_common.h"
+#include "xrp_kernel_defs.h"
 
 #ifdef LOG_TAG
 #undef LOG_TAG

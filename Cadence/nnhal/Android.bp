@@ -1,0 +1,32 @@
+cc_prebuilt_binary {
+    name: "android.hardware.neuralnetworks@1.2-service-xtensa",
+    relative_install_path: "hw",
+    vendor: true,
+	init_rc: ["android.hardware.neuralnetworks@1.2-service-xtensa.rc"],
+    srcs: ["android.hardware.neuralnetworks@1.2-service-xtensa"],
+    strip: {
+        none: true,
+    },
+
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libdl",
+        "libhardware",
+        "libhidlbase",
+        "libhidlmemory",
+		"libbinder",
+        "liblog",
+        "libutils",
+		"libfmq",
+		"libnativewindow",
+		"libui",
+		"libvdspservice",
+		"android.hardware.neuralnetworks@1.3",
+		"android.hardware.neuralnetworks@1.2",
+        "android.hardware.neuralnetworks@1.0",
+        "android.hardware.neuralnetworks@1.1",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+    ],
+}

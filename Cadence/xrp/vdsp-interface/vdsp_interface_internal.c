@@ -15,6 +15,14 @@
 
 #define LOG_TAG "vdsp_interface_internal"
 
+static void release_xrp_buffers(struct xrp_buffer **buf , uint32_t num)
+{
+	uint32_t i;
+	for(i = 0; i < num; i++)
+	{
+		xrp_release_buffer(buf[i]);
+	}
+}
 __attribute__ ((visibility("default"))) void *sprd_vdsp_open_device(int idx , enum sprd_vdsp_worktype type)
 {
 	enum xrp_status in_status = -1;
@@ -101,10 +109,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command(void *device 
 		if(XRP_STATUS_SUCCESS != status)
 		{
 			xrp_release_buffer_group(group);
-			for(unsigned int j = 0; j < i; j++)
-			{
-				xrp_release_buffer(buf[j]);
-			}
+			release_xrp_buffers(buf , i);
 			xrp_release_queue(queue);
 			free(buf);
 			return SPRD_XRP_STATUS_FAILURE;
@@ -114,10 +119,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command(void *device 
 		if(XRP_STATUS_SUCCESS != status)
 		{
 			xrp_release_buffer_group(group);
-			for(unsigned int j = 0; j < i; j++)
-			{
-				xrp_release_buffer(buf[j]);
-			}
+			release_xrp_buffers(buf , i);
 			xrp_release_queue(queue);
 			free(buf);
 			return SPRD_XRP_STATUS_FAILURE;
@@ -132,10 +134,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command(void *device 
 		ret = SPRD_XRP_STATUS_FAILURE;
 	}
 	xrp_release_buffer_group(group);
-	for(i = 0; i < buf_num; i++)
-	{
-		xrp_release_buffer(buf[i]);
-	}
+	release_xrp_buffers(buf , buf_num);
 	xrp_release_queue(queue);
 	free(buf);
 	return ret;
@@ -198,7 +197,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 
 	if(0 == strncmp(ns_id,FACEID_NSID,9))
 	{
-		if(NULL != input->vir_addr)
+		if(NULL != input_vir)
 		{
 
 			faceid_in = (FACEID_IN*)input_vir;
@@ -244,10 +243,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 				if(XRP_STATUS_SUCCESS != status)
 				{
 						xrp_release_buffer_group(group);
-						for(unsigned int j = 0; j < i; j++)
-						{
-								xrp_release_buffer(buf[j]);
-						}
+						release_xrp_buffers(buf , i);
 						free(buf);
 						ALOGE("func:%s line:%d , xrp_create_buffer i:%d, error\n" , __func__ , __LINE__ , i);
 						return SPRD_XRP_STATUS_FAILURE;
@@ -257,10 +253,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 				if(XRP_STATUS_SUCCESS != status)
 				{
 						xrp_release_buffer_group(group);
-						for(unsigned int j = 0; j < i; j++)
-						{
-								xrp_release_buffer(buf[j]);
-						}
+						release_xrp_buffers(buf , i);
 						free(buf);
 						ALOGE("func:%s line:%d , xrp_add_buffer_to_group i:%d, error\n" , __func__ , __LINE__ , i);
 						return SPRD_XRP_STATUS_FAILURE;
@@ -278,10 +271,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 				ret = SPRD_XRP_STATUS_FAILURE;
 		}
 		xrp_release_buffer_group(group);
-		for(i = 0; i < buf_num; i++)
-		{
-				xrp_release_buffer(buf[i]);
-		}
+		release_xrp_buffers(buf , buf_num);
 		free(buf);
 	}
 

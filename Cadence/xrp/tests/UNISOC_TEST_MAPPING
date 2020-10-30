@@ -1,0 +1,7 @@
+{
+  "presubmit": [
+    {
+      "name": "sprd_vdsp_if_tests"
+    }
+  ]
+}

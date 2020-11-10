@@ -400,6 +400,12 @@ enum sprd_vdsp_result sprd_vdsp_loadlibrary_direc(void *handle , const char *lib
 enum sprd_vdsp_result sprd_vdsp_unloadlibrary_direc(void *handle , const char *libname);
 enum sprd_vdsp_result sprd_vdsp_power_hint_direc(void *handle , enum sprd_vdsp_power_level level , enum sprd_vdsp_powerhint_acquire_release acquire_release);
 
+/*
+return value
+1 is support vdsp
+0 is not support vdsp
+*/
+int sprd_vdsp_check_supported();
 
 
 #ifdef __cplusplus

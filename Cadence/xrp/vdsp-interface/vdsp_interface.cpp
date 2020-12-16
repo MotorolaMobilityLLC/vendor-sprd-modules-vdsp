@@ -439,7 +439,7 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_check_supported()
         property_get("ro.boot.auto.efuse", l5ptype , "-1");
         if(0 == strcmp(l5ptype , "T618")) {
                 return 1;
-        } else if(0 == strcmp(l5ptype , "T610")) {
+        } else if((0 == strcmp(l5ptype , "T610")) || (0 == strcmp(l5ptype , "T700"))) {
                 return 0;
         }
         // other type support as default.

@@ -34,24 +34,14 @@
 #include "VdspIon.h"
 
 namespace android {
-
+#define UNUSED(x) (void)(x)
 bool VdspIon::Is_ion_legacy(int fd) {
-    struct ion_new_allocation_data data;
-
-    if (fd < 0) {
-      ALOGE("%s:open dev ion error!", __func__);
-      return true;
-    }
-
-    int err = ioctl(fd, ION_IOC_VERSION, &data);
-    return (err == 0) ? false : true;
+	UNUSED(fd);
+    return false;
 }
 
 bool VdspIon::is_ion_legacy() {
-    struct ion_new_allocation_data data;
-
-    int err = ioctl(mIonDeviceFd, ION_IOC_VERSION, &data);
-    return (err == 0) ? false : true;
+    return false;
 }
 
 VdspIon::VdspIon(const char *device, size_t size, uint32_t flags,

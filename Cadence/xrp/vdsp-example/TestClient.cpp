@@ -249,6 +249,23 @@ typedef struct
     int32_t count;
 } FACEID_HELPINFO;
 
+typedef struct camera_face {
+  	int32_t rect[4];
+  	int32_t score;
+  	int32_t id;
+  	int32_t left_eye[2];
+  	int32_t right_eye[2];
+  	int32_t mouth[2];
+ }camera_face_t;
+
+typedef struct
+{
+  	camera_face_t face;
+  	int angle;
+  	int pose;
+  	uint8_t face_num;
+}FACEID_FACE_TAG;
+
 void* thread_faceid(__unused void* test)
 {
 	struct sprd_vdsp_client_inout in,out,image;
@@ -272,6 +289,16 @@ void* thread_faceid(__unused void* test)
 	open_param.work_type = SPRD_VDSP_WORK_FACEID;
 	open_param.int_type = SPRD_VDSP_INTERFACE_DIRECTLY;
 
+	FACEID_FACE_TAG faceTag;
+
+	faceTag.face.rect[0] = 347;
+	faceTag.face.rect[1] = 259;
+	faceTag.face.rect[2] = 347 + 256;
+	faceTag.face.rect[3] = 259 + 256;
+	faceTag.angle = 90;
+	faceTag.pose = -3;
+	faceTag.face_num = 1;
+
 	/*camera simulation*/
 	image.size = w*h*3/2;
 	imagehandle = sprd_alloc_ionmem2(image.size , 0 , &image.fd , &image.viraddr, &inphyaddr);
@@ -287,7 +314,7 @@ void* thread_faceid(__unused void* test)
     else
     {
             fprintf(stderr , "fopen test.yuv failed\n");
-			return NULL;
+            return NULL;
     }
 
 	/*input ion*/
@@ -304,8 +331,18 @@ void* thread_faceid(__unused void* test)
 	faceid_in->workstage = 0;/*enroll*/
 	faceid_in->framecount = 0;
 	faceid_in->liveness = liveness;
-	faceid_in->phyaddr = image.phy_addr;
-	faceid_in->help_info[0] = 0xFF;
+	faceid_in->phyaddr = image.fd;
+
+
+	faceid_in->help_info[0] = 1;
+	faceid_in->help_info[1] = 1;
+	faceid_in->help_info[2] = 50;
+	faceid_in->help_info[3] = 1;
+	faceid_in->help_info[4] = 8;
+	faceid_in->help_info[5] = -8;
+
+	memcpy(&faceid_in->fd_info,&faceTag,sizeof(FACEID_FACE_TAG));
+
 	faceid_in->l_ir_phyaddr = 0x12;
 	faceid_in->r_ir_phyaddr = 0x34;
 	faceid_in->bgr_phyaddr = 0x56;
@@ -363,7 +400,6 @@ void* thread_faceid(__unused void* test)
 			fprintf(stderr ,"vdsp result %d,out addr %X\n",face_info->ret,face_info->facepoint_addr);
 			fprintf(stderr ,"x %d y %d w %d h %d yaw %d pitch %d\n",face_info->x,face_info->y,face_info->width,face_info->height,face_info->yawAngle,face_info->pitchAngle);
 		}
-
 	}
 	end_time = systemTime(CLOCK_MONOTONIC);
 	duration = (int)((end_time - start_time)/1000000);

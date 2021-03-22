@@ -91,20 +91,7 @@ struct vdsp_open_param
 	enum sprd_vdsp_worktype work_type;
 	enum sprd_vdsp_interface_type int_type;
 };
-typedef struct
-{
-	uint32_t width, height;
-	uint32_t phyaddr;		/*image phyaddr*/
-	uint32_t workstage;		/*enroll:0,auth:1*/
-	uint32_t framecount;
-	uint32_t liveness;		/*0:off 1:faceid_single 2:faceid_3D 3:pay_3D*/
-	int32_t  help_info[259];		/*AE BV*/
-	uint32_t fd_info[15];		/*Face Info from Hal*/
-	uint32_t l_ir_phyaddr;	/*Left IR phyaddr*/
-	uint32_t r_ir_phyaddr;	/*Right IR phyaddr*/
-	uint32_t bgr_phyaddr;	/*bgr phyaddr*/
-	uint32_t otp_phyaddr;	/*otp phyaddr*/
-}FACEID_IN;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

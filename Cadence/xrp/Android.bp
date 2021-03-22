@@ -130,41 +130,41 @@ cc_library {
 
 }
 
-cc_binary {
-    name: "xrpclient",
-    system_ext_specific: true,
-    vendor_available: true,
-    cflags: [
-        "-fno-strict-aliasing",
-        "-Wunused-variable",
-        "-Werror",
-        "-fvisibility=hidden",
-    ],
+//cc_binary {
+//    name: "xrpclient",
+//    system_ext_specific: true,
+//    vendor_available: true,
+//    cflags: [
+//        "-fno-strict-aliasing",
+//        "-Wunused-variable",
+//        "-Werror",
+//        "-fvisibility=hidden",
+//    ],
 
-    include_dirs: [
-        "vendor/sprd/modules/libmemion",
-        "vendor/sprd/external/kernel-headers",
-        "system/core/base/include",
-    ],
-    local_include_dirs: [
-        "xrp-host/inc",
-        "vdsp-service",
-        "vdsp-interface",
-    ],
+//    include_dirs: [
+//       "vendor/sprd/modules/libmemion",
+//        "vendor/sprd/external/kernel-headers",
+//        "system/core/base/include",
+//    ],
+//    local_include_dirs: [
+//        "xrp-host/inc",
+//        "vdsp-service",
+//        "vdsp-interface",
+//    ],
 
-    host_ldlibs: [
-        "-lm",
-        "-llog",
-    ],
+//    host_ldlibs: [
+//        "-lm",
+//        "-llog",
+//    ],
 
-    srcs: ["vdsp-example/TestClient.cpp"],
+//    srcs: ["vdsp-example/TestClient.cpp"],
 
-    shared_libs: [
-        "libutils",
-        "libcutils",
-	"liblog",
-        "libvdspservice",
-    ],
+//    shared_libs: [
+//        "libutils",
+//        "libcutils",
+//	"liblog",
+//        "libvdspservice",
+//   ],
 
-}
+//}
 

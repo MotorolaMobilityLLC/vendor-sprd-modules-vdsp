@@ -169,7 +169,6 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 	int32_t outputfd = -1;;
 	uint32_t inputsize = 0;
 	uint32_t outputsize = 0;
-	FACEID_IN *faceid_in;
 
 	char ns_id[XRP_NAMESPACE_ID_SIZE];
 	enum sprd_vdsp_status ret = SPRD_XRP_STATUS_SUCCESS;
@@ -199,15 +198,6 @@ __attribute__ ((visibility("default"))) int sprd_vdsp_send_command_directly(void
 	{
 		if(NULL != input_vir)
 		{
-
-			faceid_in = (FACEID_IN*)input_vir;
-
-			ALOGE("phy_addr %X, w %d h %d liveness %d\n" , 
-													faceid_in->phyaddr,
-													faceid_in->width,
-													faceid_in->height,
-													faceid_in->liveness);
-
 			xrp_run_faceid_command_directly(device,inputfd, outputfd,&status);
 			if(XRP_STATUS_SUCCESS != status)
 			{

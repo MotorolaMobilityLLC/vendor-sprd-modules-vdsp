@@ -249,6 +249,21 @@ typedef struct
     int32_t count;
 } FACEID_HELPINFO;
 
+typedef struct
+{
+	uint32_t width, height;
+	uint32_t phyaddr;		/*image phyaddr*/
+	uint32_t workstage;		/*enroll:0,auth:1*/
+	uint32_t framecount;
+	uint32_t liveness;		/*0:off 1:faceid_single 2:faceid_3D 3:pay_3D*/
+	int32_t  help_info[263];		/*AE BV*/
+	uint32_t fd_info[15];		/*Face Info from Hal*/
+	uint32_t l_ir_phyaddr;	/*Left IR phyaddr*/
+	uint32_t r_ir_phyaddr;	/*Right IR phyaddr*/
+	uint32_t bgr_phyaddr;	/*bgr phyaddr*/
+	uint32_t otp_phyaddr;	/*otp phyaddr*/
+}FACEID_IN;
+
 typedef struct camera_face {
   	int32_t rect[4];
   	int32_t score;
@@ -390,7 +405,7 @@ void* thread_faceid(__unused void* test)
 
 	//for(int i = 0;i<devid;i++)
 	{
-		ret = sprd_cavdsp_send_cmd_compat(handle , "faceid_fw" , &in , &out , NULL , 0 , 1);
+		ret = sprd_cavdsp_send_cmd_compat(handle , "faceid_fw" , &in , &image , NULL , 0 , 1);
 		if (SPRD_VDSP_RESULT_SUCCESS != ret)
 			fprintf(stderr , "xrp_run_faceid_command failed\n");
 		else

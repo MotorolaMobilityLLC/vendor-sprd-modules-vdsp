@@ -1,5 +1,4 @@
-PRODUCT_PACKAGES += libvdspservice \
-		xrpclient
+PRODUCT_PACKAGES += libvdspservice
 
 PRODUCT_COPY_FILES += \
 	vendor/sprd/modules/vdsp/Cadence/xrp/init.sprd_vdsp.rc:vendor/etc/init/init.sprd_vdsp.rc \

@@ -31,8 +31,8 @@ cc_library_shared {
     include_dirs: [
         "vendor/sprd/external/kernel-headers",
         "system/core/base/include",
-	"vendor/sprd/interfaces/vdsp/",
-	"vendor/sprd/interfaces/vdsp/1.0/default",
+        "vendor/sprd/interfaces/vdsp/",
+        "vendor/sprd/interfaces/vdsp/1.0/default",
     ],
     local_include_dirs: [
         "xrp-host/inc",
@@ -48,7 +48,7 @@ cc_library_shared {
 
     srcs: [
         "vdsp-interface/vdsp_interface.cpp",
-	"vdsp-interface/vdsp_server_interface.cpp",
+        "vdsp-interface/vdsp_server_interface.cpp",
         "vdsp-interface/sprd_vdsp_ion.cpp",
         "vdsp-service/dvfs/vdsp_dvfs.cpp",
         "vdsp-ion/vdsp_ion.cpp",
@@ -61,11 +61,11 @@ cc_library_shared {
     ],
 
     shared_libs: [
-	"libhidlbase",
+        "libhidlbase",
         "libcutils",
-	"liblog",
+        "liblog",
         "libutils",
-	"vendor.sprd.hardware.vdsp@1.0",
+        "vendor.sprd.hardware.vdsp@1.0",
     ],
     export_shared_lib_headers: [
        "vendor.sprd.hardware.vdsp@1.0",
@@ -88,8 +88,8 @@ cc_library {
     include_dirs: [
         "vendor/sprd/external/kernel-headers",
         "system/core/base/include",
-	"vendor/sprd/interfaces/vdsp/",
-	"vendor/sprd/interfaces/vdsp/1.0/default",
+        "vendor/sprd/interfaces/vdsp/",
+        "vendor/sprd/interfaces/vdsp/1.0/default",
     ],
     local_include_dirs: [
         "xrp-host/inc",
@@ -105,7 +105,7 @@ cc_library {
 
     srcs: [
         "vdsp-interface/vdsp_interface.cpp",
-	"vdsp-interface/vdsp_server_interface.cpp",
+        "vdsp-interface/vdsp_server_interface.cpp",
         "vdsp-interface/sprd_vdsp_ion.cpp",
         "vdsp-service/dvfs/vdsp_dvfs.cpp",
         "vdsp-ion/vdsp_ion.cpp",
@@ -118,11 +118,11 @@ cc_library {
     ],
 
     shared_libs: [
-	"libhidlbase",
+        "libhidlbase",
         "libcutils",
-	"liblog",
+        "liblog",
         "libutils",
-	"vendor.sprd.hardware.vdsp@1.0",
+        "vendor.sprd.hardware.vdsp@1.0",
     ],
     export_shared_lib_headers: [
        "vendor.sprd.hardware.vdsp@1.0",
@@ -130,41 +130,46 @@ cc_library {
 
 }
 
-//cc_binary {
-//    name: "xrpclient",
-//    system_ext_specific: true,
-//    vendor_available: true,
-//    cflags: [
-//        "-fno-strict-aliasing",
-//        "-Wunused-variable",
-//        "-Werror",
-//        "-fvisibility=hidden",
-//    ],
+cc_binary {
+    name: "dspclient",
+    system_ext_specific: true,
+    vendor_available: true,
+    cflags: [
+        "-fno-strict-aliasing",
+        "-Wunused-variable",
+        "-Werror",
+        "-fvisibility=hidden",
+    ],
 
-//    include_dirs: [
-//       "vendor/sprd/modules/libmemion",
-//        "vendor/sprd/external/kernel-headers",
-//        "system/core/base/include",
-//    ],
-//    local_include_dirs: [
-//        "xrp-host/inc",
-//        "vdsp-service",
-//        "vdsp-interface",
-//    ],
+    include_dirs: [
+        "vendor/sprd/modules/libmemion",
+        "vendor/sprd/external/kernel-headers",
+        "system/core/base/include",
+    ],
+    local_include_dirs: [
+        "xrp-host/inc",
+        "vdsp-service",
+        "vdsp-interface",
+    ],
 
-//    host_ldlibs: [
-//        "-lm",
-//        "-llog",
-//    ],
+    host_ldlibs: [
+        "-lm",
+        "-llog",
+    ],
 
-//    srcs: ["vdsp-example/TestClient.cpp"],
+    srcs: [
+        "vdsp-example/case_main.cpp",
+        "vdsp-example/case_vdsp.cpp",
+	"vdsp-example/case_faceid.cpp",
+	"vdsp-example/case_xtensa_add.cpp",
+],
 
-//    shared_libs: [
-//        "libutils",
-//        "libcutils",
-//	"liblog",
-//        "libvdspservice",
-//   ],
+    shared_libs: [
+        "libutils",
+        "libcutils",
+        "liblog",
+        "libvdspservice",
+   ],
 
-//}
+}
 

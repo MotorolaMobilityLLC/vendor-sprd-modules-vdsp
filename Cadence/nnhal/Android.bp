@@ -3,7 +3,14 @@ cc_prebuilt_binary {
     relative_install_path: "hw",
     vendor: true,
 	init_rc: ["android.hardware.neuralnetworks@1.2-service-xtensa.rc"],
-    srcs: ["android.hardware.neuralnetworks@1.2-service-xtensa"],
+	target: {
+		android_arm: {
+			srcs: ["bin32/android.hardware.neuralnetworks@1.2-service-xtensa"],
+		},
+		android_arm64: {
+			srcs: ["bin64/android.hardware.neuralnetworks@1.2-service-xtensa"],
+		},
+	},
     strip: {
         none: true,
     },
